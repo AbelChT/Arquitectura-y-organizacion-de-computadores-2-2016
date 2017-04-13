@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    15:28:20 04/07/2014 
--- Design Name: 
--- Module Name:    Banco_MEM - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    15:28:20 04/07/2014
+-- Design Name:
+-- Module Name:    Banco_MEM - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -30,8 +30,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity Banco_MEM is
-Port ( 	ALU_out_EX : in  STD_LOGIC_VECTOR (31 downto 0); 
-			ALU_out_MEM : out  STD_LOGIC_VECTOR (31 downto 0); -- instrucción leida en IF
+Port ( 	ALU_out_EX : in  STD_LOGIC_VECTOR (31 downto 0);
+			ALU_out_MEM : out  STD_LOGIC_VECTOR (31 downto 0); -- instrucciï¿½n leida en IF
          clk : in  STD_LOGIC;
 			reset : in  STD_LOGIC;
          load : in  STD_LOGIC;
@@ -47,6 +47,17 @@ Port ( 	ALU_out_EX : in  STD_LOGIC_VECTOR (31 downto 0);
 			BusB_MEM: out  STD_LOGIC_VECTOR (31 downto 0); -- para los store
 			RW_EX : in  STD_LOGIC_VECTOR (4 downto 0); -- registro destino de la escritura
          RW_MEM : out  STD_LOGIC_VECTOR (4 downto 0)); -- PC+4 en la etapa ID
+
+         IR_op_code_EX : in  STD_LOGIC_VECTOR (5 downto 0); -- Propagacion cod instruccion
+         IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
+
+         Reg_Rs_EX : in  STD_LOGIC_VECTOR (4 downto 0); -- Propagacion registros
+         Reg_Rt_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rs_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rt_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0));
+
 end Banco_MEM;
 
 architecture Behavioral of Banco_MEM is
@@ -63,8 +74,14 @@ SYNC_PROC: process (clk)
 				MemRead_MEM <= '0';
 				MemtoReg_MEM <= '0';
 				RegWrite_MEM <= '0';
+
+        IR_op_code_MEM <= "000000";
+        Reg_Rs_MEM <= "00000";
+        Reg_Rt_MEM <= "00000";
+        Reg_Rd_MEM <= "00000";
+
          else
-            if (load='1') then 
+            if (load='1') then
 					ALU_out_MEM <= ALU_out_EX;
 					BUSB_MEM <= BUSB_EX;
 					RW_MEM <= RW_EX;
@@ -72,10 +89,15 @@ SYNC_PROC: process (clk)
 					MemRead_MEM <= MemRead_EX;
 					MemtoReg_MEM <= MemtoReg_EX;
 					RegWrite_MEM <= RegWrite_EX;
-				end if;	
-         end if;        
+
+          IR_op_code_MEM <= IR_op_code_EX;
+          Reg_Rs_MEM <= Reg_Rs_EX;
+          Reg_Rt_MEM <= Reg_Rt_EX;
+          Reg_Rd_MEM <= Reg_Rd_EX;
+
+				end if;
+         end if;
       end if;
    end process;
 
 end Behavioral;
-

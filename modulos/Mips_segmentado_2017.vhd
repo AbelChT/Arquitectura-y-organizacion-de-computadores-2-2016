@@ -168,6 +168,15 @@ COMPONENT Banco_EX
 				   Dout : out  STD_LOGIC_VECTOR (4 downto 0));
 		end component;
 
+    COMPONENT mux4_5bits
+    Port (   DIn0 : in  STD_LOGIC_VECTOR (4 downto 0);
+             DIn1 : in  STD_LOGIC_VECTOR (4 downto 0);
+             DIn2 : in  STD_LOGIC_VECTOR (4 downto 0);
+             DIn3 : in  STD_LOGIC_VECTOR (4 downto 0);
+    			   ctrl : in  STD_LOGIC_VECTOR (1 downto 0);
+             Dout : out  STD_LOGIC_VECTOR (4 downto 0));
+    END COMPONENT;
+
 COMPONENT Banco_MEM
     PORT(
          ALU_out_EX : IN  std_logic_vector(31 downto 0);
@@ -251,15 +260,19 @@ Z <= '1' when (busA=busB) else '0';
 
 ------------------------gesti�n de la parada en ID-----------------------------------
 -- incluir aqu� el c�digo que detecta los riesgos de datos
+
 -- operación actual = IR_ID(31 downto 26)
 -- operación un ciclo por delante =
 -- operación dos ciclos por delante =
+
 -- registro rs usado en este ciclo =
 -- registro rs usado un ciclo antes =
 -- registro rs usado dos ciclos antes =
+
 -- registro rt usado en este ciclo =
 -- registro rt usado un ciclo antes =
 -- registro rt usado dos ciclos antes =
+
 -- registro rd usado en este ciclo =
 -- registro rd usado un ciclo antes =
 -- registro rd usado dos ciclos antes =
@@ -268,11 +281,11 @@ Z <= '1' when (busA=busB) else '0';
 mtx_busA <= '00' when () else
             '01' when () else
             '10' when () else
-            '11';
+            '11' when others;
 mtx_busB <= '00' when () else
             '01' when () else
             '10' when () else
-            '11';
+            '11' when others;
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
 -- incluir aqu� el c�digo gestiona la anticipaci�n de operandos

@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    14:46:01 04/07/2014 
--- Design Name: 
--- Module Name:    Banco_EX - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    14:46:01 04/07/2014
+-- Design Name:
+-- Module Name:    Banco_EX - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -53,8 +53,14 @@ entity Banco_EX is
            RegWrite_EX : out  STD_LOGIC;
 			  ALUctrl_ID: in STD_LOGIC_VECTOR (2 downto 0);
 			  ALUctrl_EX: out STD_LOGIC_VECTOR (2 downto 0);
+
+           IR_op_code_ID : in  STD_LOGIC_VECTOR (5 downto 0); -- Propagacion cod instruccion
+           IR_op_code_EX : out  STD_LOGIC_VECTOR (5 downto 0);
+
+           Reg_Rs_ID : in  STD_LOGIC_VECTOR (4 downto 0); -- Propagacion registros
            Reg_Rt_ID : in  STD_LOGIC_VECTOR (4 downto 0);
            Reg_Rd_ID : in  STD_LOGIC_VECTOR (4 downto 0);
+           Reg_Rs_EX : out  STD_LOGIC_VECTOR (4 downto 0);
            Reg_Rt_EX : out  STD_LOGIC_VECTOR (4 downto 0);
            Reg_Rd_EX : out  STD_LOGIC_VECTOR (4 downto 0));
 end Banco_EX;
@@ -75,11 +81,15 @@ SYNC_PROC: process (clk)
 				MemRead_EX <= '0';
 				MemtoReg_EX <= '0';
 				RegWrite_EX <= '0';
+
 				Reg_Rt_EX <= "00000";
 				Reg_Rd_EX <= "00000";
+        Reg_Rs_EX <= "00000";
+        IR_op_code_EX <= "00000";
+
 				ALUctrl_EX <= "000";
          else
-            if (load='1') then 
+            if (load='1') then
 					busA_EX <= busA;
 					busB_EX <= busB;
 					RegDst_EX <= RegDst_ID;
@@ -90,12 +100,14 @@ SYNC_PROC: process (clk)
 					RegWrite_EX <= RegWrite_ID;
 					Reg_Rt_EX <= Reg_Rt_ID;
 					Reg_Rd_EX <= Reg_Rd_ID;
+          Reg_Rs_EX <= Reg_Rs_ID;
+          IR_op_code_EX <= IR_op_code_ID;
+
 					ALUctrl_EX <= ALUctrl_ID;
 					inm_ext_EX <= inm_ext;
-				end if;	
-         end if;        
+				end if;
+         end if;
       end if;
    end process;
 
 end Behavioral;
-
