@@ -257,6 +257,10 @@ signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX: std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal avanzar_instruccion: std_logic;
+signal instruccion_ex, instruccion_mem: std_logic_vector(4 downto 0);-- Instrucciones en otras etapas
+signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
+signal Reg_Rs_EX : std_logic_vector(4 downto 0);
+signal MuxMD , RegWrite_rs STD_LOGIC; -- Conexion Nuevas UC
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
 ------------------------------------------------------------------------------------
@@ -322,18 +326,25 @@ mtx_busB <= '00' when () else
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
 -- incluir aqu� el c�digo gestiona la anticipaci�n de operandos
-mutex_busA : mux4_5bits port map (lo que sea);
+-- BusA bus a
+-- BusB bus b
+-- ALU_out_EX Salida ALU
+-- ALU_out_MEM salida banco mem ALU
+-- Mem_out salida ram
 
-mutex_busA : mux4_5bits port map (lo que sea);
+--- salidas mutex_busA_salida, mutex_busB_salida
 
----------------------------------------
---Usado para añadir las dos nuevas instrucciones
-mutex_MD : mux2_1 port map (lo que sea);
+mutex_busA : mux4_5bits port map (DIn0 => BusA, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busA , Dout => mutex_busA_salida);
+
+mutex_busB : mux4_5bits port map (DIn0 => BusB, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busB , Dout => mutex_busB_salida);
+
+-- Falta hacer la parte de modificar la uc y meter en todos los bancos la propagación de la uc
+-- Y a partir de la siguiente fase
 
 -------------------------------------------------------------------------------------
 -- Deber�is incluir la nueva se�al Update_Rs en la unidad de control
 UC_seg: UC port map (IR_op_code => IR_ID(31 downto 26), Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
-							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID);
+							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID); Falta
 -------------------------------------------------------------------------------------
 -- Ahora mismo s�lo esta implementada la instrucci�n de salto BEQ. Si es una instrucci�n de salto y se activa la se�al Z se carga la direcci�n de salto, sino PC+4
 PCSrc <= Branch AND Z;
@@ -342,12 +353,18 @@ PCSrc <= Branch AND Z;
 -- si no es aritm�tica le damos el valor de la suma (000)
 ALUctrl_ID <= IR_ID(2 downto 0) when IR_ID(31 downto 26)= "000001" else "000";
 -- hay que a�adir los campos necesarios a los registros intermedios
-Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => '1', busA => busA, busB => busB, busA_EX => busA_EX, busB_EX => busB_EX,
+
+-- instruccion_ex
+-- IR_ID(31 downto 26) Instruccion actual
+-- IR_ID(25 downto 21) Rs
+Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => '1', busA => mutex_busA_salida, busB => mutex_busB_salida, busA_EX => busA_EX, busB_EX => busB_EX,
 											RegDst_ID => RegDst_ID, ALUSrc_ID => ALUSrc_ID, MemWrite_ID => MemWrite_ID, MemRead_ID => MemRead_ID,
 											MemtoReg_ID => MemtoReg_ID, RegWrite_ID => RegWrite_ID, RegDst_EX => RegDst_EX, ALUSrc_EX => ALUSrc_EX,
 											MemWrite_EX => MemWrite_EX, MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX,
 											ALUctrl_ID => ALUctrl_ID, ALUctrl_EX => ALUctrl_EX, inm_ext => inm_ext, inm_ext_EX=> inm_ext_EX,
-											Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rd_ID => IR_ID(15 downto 11), Reg_Rt_EX => Reg_Rt_EX, Reg_Rd_EX => Reg_Rd_EX);
+                      IR_op_code_ID=>IR_ID(31 downto 26) , IR_op_code_EX => instruccion_ex,
+											Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rd_ID => IR_ID(15 downto 11), Reg_Rs_ID => IR_ID(25 downto 21),
+                      Reg_Rt_EX => Reg_Rt_EX, Reg_Rd_EX => Reg_Rd_EX , Reg_Rs_EX => Reg_Rs_EX);
 
 --
 ------------------------------------------Etapa EX-------------------------------------------------------------------
@@ -365,6 +382,10 @@ Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_
 --
 ------------------------------------------Etapa MEM-------------------------------------------------------------------
 --
+
+---------------------------------------
+--Usado para añadir las dos nuevas instrucciones
+mutex_MD : mux2_1 port map (lo que sea);
 
 Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => ALU_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out);
 -- hay que a�adir los campos necesarios a los registros intermedios
