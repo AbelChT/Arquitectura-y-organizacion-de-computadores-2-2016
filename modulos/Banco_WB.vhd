@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    22:25:11 04/07/2014 
--- Design Name: 
--- Module Name:    Banco_WB - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    22:25:11 04/07/2014
+-- Design Name:
+-- Module Name:    Banco_WB - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -30,9 +30,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity Banco_WB is
-Port ( 	ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0); 
-			ALU_out_WB : out  STD_LOGIC_VECTOR (31 downto 0); 
-			MEM_out : in  STD_LOGIC_VECTOR (31 downto 0); 
+Port ( 	ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
+			ALU_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
+			MEM_out : in  STD_LOGIC_VECTOR (31 downto 0);
 			MDR : out  STD_LOGIC_VECTOR (31 downto 0); --memory data register
          clk : in  STD_LOGIC;
 			reset : in  STD_LOGIC;
@@ -42,7 +42,15 @@ Port ( 	ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
 			MemtoReg_WB : out  STD_LOGIC;
          RegWrite_WB : out  STD_LOGIC;
          RW_MEM : in  STD_LOGIC_VECTOR (4 downto 0); -- registro destino de la escritura
-         RW_WB : out  STD_LOGIC_VECTOR (4 downto 0)); -- PC+4 en la etapa IDend Banco_WB;
+         RW_WB : out  STD_LOGIC_VECTOR (4 downto 0); -- PC+4 en la etapa IDend Banco_WB;
+
+         -- postincremento
+         RegWrite_MEM_rs : in  STD_LOGIC;
+         RegWrite_WB_rs : out  STD_LOGIC;
+         RW_MEM_rs : in  STD_LOGIC_VECTOR (4 downto 0);
+         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0)
+         ); -- PC+4 en la etapa IDend Banco_WB;
+
 end Banco_WB;
 architecture Behavioral of Banco_WB is
 
@@ -56,17 +64,23 @@ SYNC_PROC: process (clk)
 				RW_WB <= "00000";
 				MemtoReg_WB <= '0';
 				RegWrite_WB <= '0';
+
+        RegWrite_WB_rs <= '0';
+        RW_WB_rs  <= "00000";
+
          else
-            if (load='1') then 
+            if (load='1') then
 					ALU_out_WB <= ALU_out_MEM;
 					MDR <= Mem_out;
 					RW_WB <= RW_MEM;
 					MemtoReg_WB <= MemtoReg_MEM;
 					RegWrite_WB <= RegWrite_MEM;
-				end if;	
-         end if;        
+
+          RegWrite_WB_rs <= RegWrite_MEM_rs;
+          RW_WB_rs <= RW_MEM_rs;
+				end if;
+         end if;
       end if;
    end process;
 
 end Behavioral;
-

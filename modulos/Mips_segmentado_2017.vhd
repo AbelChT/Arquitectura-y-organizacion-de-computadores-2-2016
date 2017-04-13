@@ -239,7 +239,13 @@ COMPONENT Banco_MEM
          MemtoReg_WB : OUT  std_logic;
          RegWrite_WB : OUT  std_logic;
          RW_MEM : IN  std_logic_vector(4 downto 0);
-         RW_WB : OUT  std_logic_vector(4 downto 0)
+         RW_WB : OUT  std_logic_vector(4 downto 0);
+
+         RegWrite_MEM_rs : in  STD_LOGIC;
+         RegWrite_WB_rs : out  STD_LOGIC;
+         RW_MEM_rs : in  STD_LOGIC_VECTOR (4 downto 0);
+         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0)
+
         );
     END COMPONENT;
 
@@ -312,6 +318,7 @@ mtx_busB <= '00' when () else
             '01' when () else
             '10' when () else
             '11' when others;
+
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
 -- incluir aqu� el c�digo gestiona la anticipaci�n de operandos
