@@ -88,11 +88,13 @@ end component;
 COMPONENT BReg
     PORT(
          clk : IN  std_logic;
-		 reset : in  STD_LOGIC;
+		     reset : in  STD_LOGIC;
          RA : IN  std_logic_vector(4 downto 0);
          RB : IN  std_logic_vector(4 downto 0);
          RW : IN  std_logic_vector(4 downto 0);
+         RW_pos : in std_logic_vector (4 downto 0); --Dir para el registro postincremento
          BusW : IN  std_logic_vector(31 downto 0);
+         BusW_pos : in std_logic_vector (31 downto 0);--entrada del registro con postincremento
          RegWrite : IN  std_logic;
          BusA : OUT  std_logic_vector(31 downto 0);
          BusB : OUT  std_logic_vector(31 downto 0)
@@ -117,7 +119,11 @@ component UC is
            MemWrite : out  STD_LOGIC;
            MemRead : out  STD_LOGIC;
            MemtoReg : out  STD_LOGIC;
-           RegWrite : out  STD_LOGIC);
+           RegWrite : out  STD_LOGIC;
+           MuxMD : out  STD_LOGIC; -- Mutex añadido antes de la memoria de datos
+           RegWrite_rs : out  STD_LOGIC -- Controla si se hace un postincremento
+
+           );
 end component;
 
 COMPONENT Banco_EX
@@ -129,8 +135,8 @@ COMPONENT Banco_EX
          busB : IN  std_logic_vector(31 downto 0);
          busA_EX : OUT  std_logic_vector(31 downto 0);
          busB_EX : OUT  std_logic_vector(31 downto 0);
-		 inm_ext: IN  std_logic_vector(31 downto 0);
-		 inm_ext_EX: OUT  std_logic_vector(31 downto 0);
+		     inm_ext: IN  std_logic_vector(31 downto 0);
+		     inm_ext_EX: OUT  std_logic_vector(31 downto 0);
          RegDst_ID : IN  std_logic;
          ALUSrc_ID : IN  std_logic;
          MemWrite_ID : IN  std_logic;
@@ -143,12 +149,20 @@ COMPONENT Banco_EX
          MemRead_EX : OUT  std_logic;
          MemtoReg_EX : OUT  std_logic;
          RegWrite_EX : OUT  std_logic;
-		 ALUctrl_ID: in STD_LOGIC_VECTOR (2 downto 0);
-		 ALUctrl_EX: out STD_LOGIC_VECTOR (2 downto 0);
-         Reg_Rt_ID : IN  std_logic_vector(4 downto 0);
-         Reg_Rd_ID : IN  std_logic_vector(4 downto 0);
-         Reg_Rt_EX : OUT  std_logic_vector(4 downto 0);
-         Reg_Rd_EX : OUT  std_logic_vector(4 downto 0)
+
+		     ALUctrl_ID: in STD_LOGIC_VECTOR (2 downto 0);
+		     ALUctrl_EX: out STD_LOGIC_VECTOR (2 downto 0);
+
+         IR_op_code_ID : in  STD_LOGIC_VECTOR (5 downto 0); -- Propagacion cod instruccion
+         IR_op_code_EX : out  STD_LOGIC_VECTOR (5 downto 0);
+
+         Reg_Rs_ID : in  STD_LOGIC_VECTOR (4 downto 0); -- Propagacion registros
+         Reg_Rt_ID : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_ID : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rs_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rt_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_EX : out  STD_LOGIC_VECTOR (4 downto 0)
+
         );
     END COMPONENT;
 
@@ -168,6 +182,7 @@ COMPONENT Banco_EX
 				   Dout : out  STD_LOGIC_VECTOR (4 downto 0));
 		end component;
 
+-- Nuestro mutex de 4 entradas
     COMPONENT mux4_5bits
     Port (   DIn0 : in  STD_LOGIC_VECTOR (4 downto 0);
              DIn1 : in  STD_LOGIC_VECTOR (4 downto 0);
@@ -195,7 +210,18 @@ COMPONENT Banco_MEM
          BusB_EX : IN  std_logic_vector(31 downto 0);
          BusB_MEM : OUT  std_logic_vector(31 downto 0);
          RW_EX : IN  std_logic_vector(4 downto 0);
-         RW_MEM : OUT  std_logic_vector(4 downto 0)
+         RW_MEM : OUT  std_logic_vector(4 downto 0);
+
+         IR_op_code_EX : in  STD_LOGIC_VECTOR (5 downto 0); -- Propagacion cod instruccion
+         IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
+
+         Reg_Rs_EX : in  STD_LOGIC_VECTOR (4 downto 0); -- Propagacion registros
+         Reg_Rt_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rs_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rt_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0)
+
         );
     END COMPONENT;
 
@@ -289,6 +315,14 @@ mtx_busB <= '00' when () else
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
 -- incluir aqu� el c�digo gestiona la anticipaci�n de operandos
+mutex_busA : mux4_5bits port map (lo que sea);
+
+mutex_busA : mux4_5bits port map (lo que sea);
+
+---------------------------------------
+--Usado para añadir las dos nuevas instrucciones
+mutex_MD : mux2_1 port map (lo que sea);
+
 -------------------------------------------------------------------------------------
 -- Deber�is incluir la nueva se�al Update_Rs en la unidad de control
 UC_seg: UC port map (IR_op_code => IR_ID(31 downto 26), Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
