@@ -57,7 +57,7 @@ begin
 		 WHEN  "000011"  =>  Branch <= '0'; RegDst <= '0'; ALUSrc <= '1'; MemWrite <= '1'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; MuxMD <= '1'; RegWrite_rs <= '0'; -- sw
 		 WHEN  "000100"  =>  Branch <= '1'; RegDst <= '0'; ALUSrc <= '0'; MemWrite <= '0'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; MuxMD <= '1'; RegWrite_rs <= '0'; --beq
      WHEN  "001010"  =>  Branch <= '0'; RegDst <= '0'; ALUSrc <= '1'; MemWrite <= '0'; MemRead <= '1'; MemtoReg <= '1'; RegWrite <= '1'; MuxMD <= '0'; RegWrite_rs <= '1'; --lw_pos
-     WHEN  "000011"  =>  Branch <= '0'; RegDst <= '0'; ALUSrc <= '1'; MemWrite <= '1'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; MuxMD <= '0'; RegWrite_rs <= '1'; -- sw_pos
+     WHEN  "001011"  =>  Branch <= '0'; RegDst <= '0'; ALUSrc <= '1'; MemWrite <= '1'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; MuxMD <= '0'; RegWrite_rs <= '1'; -- sw_pos
 		 WHEN  OTHERS 	  =>  Branch <= '0'; RegDst <= '0'; ALUSrc <= '0'; MemWrite <= '0'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; MuxMD <= '1'; RegWrite_rs <= '0'; -- desconocida
 	  END CASE;
 end process;
