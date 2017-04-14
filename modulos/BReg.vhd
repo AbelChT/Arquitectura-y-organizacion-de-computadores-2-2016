@@ -36,7 +36,7 @@ use IEEE.std_logic_unsigned.all;
 entity BReg is
 port (
         clk : in std_logic;
-		  reset : in std_logic;
+		    reset : in std_logic;
         RA : in std_logic_vector (4 downto 0); --Dir para el puerto de lectura A
         RB : in std_logic_vector (4 downto 0); --Dir para el puerto de lectura A
         RW : in std_logic_vector (4 downto 0); --Dir para el puerto de escritura
