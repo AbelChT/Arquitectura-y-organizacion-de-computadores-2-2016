@@ -126,6 +126,29 @@ component UC is
            );
 end component;
 
+component HDM is
+  Port (
+	op_code_ID : in  STD_LOGIC_VECTOR (5 downto 0);
+	op_code_EX : in  STD_LOGIC_VECTOR (5 downto 0);
+	op_code_MEM : in  STD_LOGIC_VECTOR (5 downto 0);
+
+  Reg_Rs_ID : in  STD_LOGIC_VECTOR (4 downto 0);
+	Reg_Rt_ID : in  STD_LOGIC_VECTOR (4 downto 0);
+
+	Reg_Rs_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+	Reg_Rt_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+	Reg_Rd_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+
+  Reg_Rs_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
+	Reg_Rt_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
+	Reg_Rd_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
+
+	mtx_busA : out  STD_LOGIC_VECTOR (1 downto 0);
+	mtx_busB : out  STD_LOGIC_VECTOR (1 downto 0);
+	signal_STOP : out  STD_LOGIC
+  );
+  END COMPONENT;
+
 COMPONENT Banco_EX
     PORT(
          clk : IN  std_logic;
@@ -281,8 +304,6 @@ signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
 signal IR_op_code_EX, IR_op_code_ID, IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
-signal avanzar_instruccion: std_logic;
-signal instruccion_ex, instruccion_mem: std_logic_vector(4 downto 0);-- Instrucciones en otras etapas
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
 
