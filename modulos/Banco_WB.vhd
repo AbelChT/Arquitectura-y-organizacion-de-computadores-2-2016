@@ -30,8 +30,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity Banco_WB is
-Port ( 	ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
-			ALU_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
+Port ( 	MuxMD_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
+			MuxMD_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
 			MEM_out : in  STD_LOGIC_VECTOR (31 downto 0);
 			MDR : out  STD_LOGIC_VECTOR (31 downto 0); --memory data register
          clk : in  STD_LOGIC;
@@ -45,10 +45,15 @@ Port ( 	ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
          RW_WB : out  STD_LOGIC_VECTOR (4 downto 0); -- PC+4 en la etapa IDend Banco_WB;
 
          -- postincremento
-         RegWrite_MEM_rs : in  STD_LOGIC;
-         RegWrite_WB_rs : out  STD_LOGIC;
          RW_MEM_rs : in  STD_LOGIC_VECTOR (4 downto 0);
-         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0)
+         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0);
+
+         ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
+         ALU_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
+
+         --Nuevo UC
+         RegWrite_rs_MEM : in STD_LOGIC;
+         RegWrite_rs_WB : out STD_LOGIC
          ); -- PC+4 en la etapa IDend Banco_WB;
 
 end Banco_WB;
@@ -59,25 +64,29 @@ SYNC_PROC: process (clk)
    begin
       if (clk'event and clk = '1') then
          if (reset = '1') then
-            ALU_out_WB <= "00000000000000000000000000000000";
+            MuxMD_out_WB <= "00000000000000000000000000000000";
 				MDR <= "00000000000000000000000000000000";
 				RW_WB <= "00000";
 				MemtoReg_WB <= '0';
 				RegWrite_WB <= '0';
 
-        RegWrite_WB_rs <= '0';
+        RegWrite_rs_WB <= '0';
         RW_WB_rs  <= "00000";
+        ALU_out_WB <= "00000000000000000000000000000000";
 
          else
             if (load='1') then
-					ALU_out_WB <= ALU_out_MEM;
+					MuxMD_out_WB <= MuxMD_out_MEM;
 					MDR <= Mem_out;
 					RW_WB <= RW_MEM;
 					MemtoReg_WB <= MemtoReg_MEM;
 					RegWrite_WB <= RegWrite_MEM;
 
-          RegWrite_WB_rs <= RegWrite_MEM_rs;
+          RegWrite_rs_WB <= RegWrite_rs_MEM;
           RW_WB_rs <= RW_MEM_rs;
+
+          ALU_out_WB <= ALU_out_MEM;
+
 				end if;
          end if;
       end if;

@@ -161,7 +161,14 @@ COMPONENT Banco_EX
          Reg_Rd_ID : in  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rs_EX : out  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rt_EX : out  STD_LOGIC_VECTOR (4 downto 0);
-         Reg_Rd_EX : out  STD_LOGIC_VECTOR (4 downto 0)
+         Reg_Rd_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+
+         --Nuevo UC
+         MuxMD_ID : in STD_LOGIC;
+         MuxMD_EX : out STD_LOGIC;
+
+         RegWrite_rs_ID : in STD_LOGIC;
+         RegWrite_rs_EX : out STD_LOGIC
 
         );
     END COMPONENT;
@@ -220,15 +227,26 @@ COMPONENT Banco_MEM
          Reg_Rd_EX : in  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rs_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rt_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
-         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0)
+         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+
+         --Para nuevas instrucciones
+         BusA_EX: in  STD_LOGIC_VECTOR (31 downto 0);
+         BusA_MEM: out  STD_LOGIC_VECTOR (31 downto 0);
+
+         --Nuevo UC
+         MuxMD_EX : in STD_LOGIC;
+         MuxMD_MEM : out STD_LOGIC;
+
+         RegWrite_rs_EX : in STD_LOGIC;
+         RegWrite_rs_MEM : out STD_LOGIC
 
         );
     END COMPONENT;
 
     COMPONENT Banco_WB
     PORT(
-         ALU_out_MEM : IN  std_logic_vector(31 downto 0);
-         ALU_out_WB : OUT  std_logic_vector(31 downto 0);
+         MuxMD_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
+         MuxMD_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
          MEM_out : IN  std_logic_vector(31 downto 0);
          MDR : OUT  std_logic_vector(31 downto 0);
          clk : IN  std_logic;
@@ -241,10 +259,16 @@ COMPONENT Banco_MEM
          RW_MEM : IN  std_logic_vector(4 downto 0);
          RW_WB : OUT  std_logic_vector(4 downto 0);
 
-         RegWrite_MEM_rs : in  STD_LOGIC;
-         RegWrite_WB_rs : out  STD_LOGIC;
+         -- postincremento
          RW_MEM_rs : in  STD_LOGIC_VECTOR (4 downto 0);
-         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0)
+         RW_WB_rs : out  STD_LOGIC_VECTOR (4 downto 0);
+
+         ALU_out_MEM : in  STD_LOGIC_VECTOR (31 downto 0);
+         ALU_out_WB : out  STD_LOGIC_VECTOR (31 downto 0);
+
+         --Nuevo UC
+         RegWrite_rs_MEM : in STD_LOGIC;
+         RegWrite_rs_WB : out STD_LOGIC
 
         );
     END COMPONENT;
@@ -260,7 +284,8 @@ signal avanzar_instruccion: std_logic;
 signal instruccion_ex, instruccion_mem: std_logic_vector(4 downto 0);-- Instrucciones en otras etapas
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal Reg_Rs_EX : std_logic_vector(4 downto 0);
-signal MuxMD , RegWrite_rs STD_LOGIC; -- Conexion Nuevas UC
+--signal MuxMD , RegWrite_rs STD_LOGIC; -- Conexion Nuevas UC
+signal MuxMD_ID, RegWrite_rs_ID : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
 ------------------------------------------------------------------------------------
@@ -343,8 +368,12 @@ mutex_busB : mux4_5bits port map (DIn0 => BusB, DIn1 => ALU_out_EX, DIn2 => ALU_
 
 -------------------------------------------------------------------------------------
 -- Deber�is incluir la nueva se�al Update_Rs en la unidad de control
+---
+--MuxMD_ID, RegWrite_rs_ID : out  STD_LOGIC; -- Mutex añadido antes de la memoria de datos
+
+
 UC_seg: UC port map (IR_op_code => IR_ID(31 downto 26), Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
-							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID); Falta
+							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID , MuxMD => MuxMD_ID , RegWrite_rs => RegWrite_rs_ID);
 -------------------------------------------------------------------------------------
 -- Ahora mismo s�lo esta implementada la instrucci�n de salto BEQ. Si es una instrucci�n de salto y se activa la se�al Z se carga la direcci�n de salto, sino PC+4
 PCSrc <= Branch AND Z;

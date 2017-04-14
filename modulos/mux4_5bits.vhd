@@ -42,8 +42,8 @@ architecture Behavioral of mux4_5bits is
 
 begin
 
-Dout <= DIn0 when (ctrl ='00') else
-        DIn1 when (ctrl ='01') else
-        DIn2 when (ctrl ='10') else
-        DIn3 when others;
+Dout <= DIn0 when (ctrl ="00") else
+        DIn1 when (ctrl ="01") else
+        DIn2 when (ctrl ="10") else
+        DIn3;
 end Behavioral;

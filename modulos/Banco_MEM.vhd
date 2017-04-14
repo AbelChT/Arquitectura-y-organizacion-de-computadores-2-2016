@@ -44,9 +44,9 @@ Port ( 	ALU_out_EX : in  STD_LOGIC_VECTOR (31 downto 0);
          MemtoReg_MEM : out  STD_LOGIC;
          RegWrite_MEM : out  STD_LOGIC;
          BusB_EX: in  STD_LOGIC_VECTOR (31 downto 0); -- para los store
-			BusB_MEM: out  STD_LOGIC_VECTOR (31 downto 0); -- para los store
-			RW_EX : in  STD_LOGIC_VECTOR (4 downto 0); -- registro destino de la escritura
-         RW_MEM : out  STD_LOGIC_VECTOR (4 downto 0)); -- PC+4 en la etapa ID
+			   BusB_MEM: out  STD_LOGIC_VECTOR (31 downto 0); -- para los store
+			   RW_EX : in  STD_LOGIC_VECTOR (4 downto 0); -- registro destino de la escritura
+         RW_MEM : out  STD_LOGIC_VECTOR (4 downto 0); -- PC+4 en la etapa ID
 
          IR_op_code_EX : in  STD_LOGIC_VECTOR (5 downto 0); -- Propagacion cod instruccion
          IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
@@ -56,7 +56,20 @@ Port ( 	ALU_out_EX : in  STD_LOGIC_VECTOR (31 downto 0);
          Reg_Rd_EX : in  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rs_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
          Reg_Rt_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
-         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0));
+         Reg_Rd_MEM : out  STD_LOGIC_VECTOR (4 downto 0);
+
+         --Para nuevas instrucciones
+         BusA_EX: in  STD_LOGIC_VECTOR (31 downto 0);
+			   BusA_MEM: out  STD_LOGIC_VECTOR (31 downto 0);
+
+         --Nuevo UC
+         MuxMD_EX : in STD_LOGIC;
+         MuxMD_MEM : out STD_LOGIC;
+
+         RegWrite_rs_EX : in STD_LOGIC;
+         RegWrite_rs_MEM : out STD_LOGIC
+
+         );
 
 end Banco_MEM;
 
@@ -80,6 +93,11 @@ SYNC_PROC: process (clk)
         Reg_Rt_MEM <= "00000";
         Reg_Rd_MEM <= "00000";
 
+        BUSA_MEM <= "00000000000000000000000000000000";
+
+        MuxMD_MEM <='0';
+        RegWrite_rs_MEM <='0';
+
          else
             if (load='1') then
 					ALU_out_MEM <= ALU_out_EX;
@@ -94,6 +112,11 @@ SYNC_PROC: process (clk)
           Reg_Rs_MEM <= Reg_Rs_EX;
           Reg_Rt_MEM <= Reg_Rt_EX;
           Reg_Rd_MEM <= Reg_Rd_EX;
+
+          BUSA_MEM <= BUSA_EX;
+
+          MuxMD_MEM <= MuxMD_EX;
+          RegWrite_rs_MEM <= RegWrite_rs_EX;
 
 				end if;
          end if;
