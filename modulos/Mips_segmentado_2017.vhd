@@ -275,17 +275,17 @@ COMPONENT Banco_MEM
 
 signal load_PC, PCSrc, RegWrite_ID, RegWrite_EX, RegWrite_MEM, RegWrite_WB, Z, Branch, RegDst_ID, RegDst_EX, ALUSrc_ID, ALUSrc_EX: std_logic;
 signal MemtoReg_ID, MemtoReg_EX, MemtoReg_MEM, MemtoReg_WB, MemWrite_ID, MemWrite_EX, MemWrite_MEM, MemRead_ID, MemRead_EX, MemRead_MEM: std_logic;
-signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, Mux_out : std_logic_vector(31 downto 0);
-signal BusW, BusA, BusB, BusA_EX, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
-signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX: std_logic_vector(4 downto 0);
+signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, Mux_out, MuxMD_out_MEM, MuxMD_out_WB : std_logic_vector(31 downto 0);
+signal BusW, BusA, BusB, BusA_EX, BusA_MEM, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
+signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_MEM_rs, RW_WB_rs : std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
+signal IR_op_code_EX, IR_op_code_ID, IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal avanzar_instruccion: std_logic;
 signal instruccion_ex, instruccion_mem: std_logic_vector(4 downto 0);-- Instrucciones en otras etapas
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
-signal Reg_Rs_EX : std_logic_vector(4 downto 0);
---signal MuxMD , RegWrite_rs STD_LOGIC; -- Conexion Nuevas UC
-signal MuxMD_ID, RegWrite_rs_ID : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
+signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
+
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
 ------------------------------------------------------------------------------------
