@@ -412,14 +412,14 @@ Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => '1', busA =
 											MemtoReg_ID => MemtoReg_ID, RegWrite_ID => RegWrite_ID, RegDst_EX => RegDst_EX, ALUSrc_EX => ALUSrc_EX,
 											MemWrite_EX => MemWrite_EX, MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX,
 											ALUctrl_ID => ALUctrl_ID, ALUctrl_EX => ALUctrl_EX, inm_ext => inm_ext, inm_ext_EX=> inm_ext_EX,
-                      IR_op_code_ID=>IR_ID(31 downto 26) , IR_op_code_EX => instruccion_ex,
+                      IR_op_code_ID=>IR_ID(31 downto 26) , IR_op_code_EX => IR_op_code_EX,
 											Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rd_ID => IR_ID(15 downto 11), Reg_Rs_ID => IR_ID(25 downto 21),
-                      Reg_Rt_EX => Reg_Rt_EX, Reg_Rd_EX => Reg_Rd_EX , Reg_Rs_EX => Reg_Rs_EX);
-
+                      Reg_Rt_EX => Reg_Rt_EX, Reg_Rd_EX => Reg_Rd_EX , Reg_Rs_EX => Reg_Rs_EX, MuxMD_EX => MuxMD_EX , MuxMD_ID => MuxMD_ID,
+                      RegWrite_rs_ID => RegWrite_rs_ID , RegWrite_rs_EX => RegWrite_rs_EX
+                      );
 --
 ------------------------------------------Etapa EX-------------------------------------------------------------------
 --
-
 muxALU_src: mux2_1 port map (Din0 => busB_EX, DIn1 => inm_ext_EX, ctrl => ALUSrc_EX, Dout => Mux_out);
 
 ALU_MIPs: ALU PORT MAP ( DA => BusA_EX, DB => Mux_out, ALUctrl => ALUctrl_EX, Dout => ALU_out_EX);
@@ -428,20 +428,31 @@ mux_dst: mux2_5bits port map (Din0 => Reg_Rt_EX, DIn1 => Reg_Rd_EX, ctrl => RegD
 -- hay que a�adir los campos necesarios a los registros intermedios
 Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_out_MEM, clk => clk, reset => reset, load => '1', MemWrite_EX => MemWrite_EX,
 												MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX, MemWrite_MEM => MemWrite_MEM, MemRead_MEM => MemRead_MEM,
-												MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, BusB_EX => BusB_EX, BusB_MEM => BusB_MEM, RW_EX => RW_EX, RW_MEM => RW_MEM);
+												MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, BusB_EX => BusB_EX, BusB_MEM => BusB_MEM, RW_EX => RW_EX, RW_MEM => RW_MEM,
+                        IR_op_code_EX => IR_op_code_EX, IR_op_code_MEM => IR_op_code_MEM,Reg_Rs_EX => Reg_Rs_EX,Reg_Rt_EX => Reg_Rt_EX
+                        Reg_Rd_EX => Reg_Rd_EX, Reg_Rs_MEM => Reg_Rs_MEM, Reg_Rt_MEM => Reg_Rt_MEM, Reg_Rd_MEM => Reg_Rd_MEM,
+                        BusA_EX => BusA_EX, BusA_MEM => BusA_MEM, MuxMD_EX => MuxMD_EX, MuxMD_MEM => MuxMD_MEM,
+                        RegWrite_rs_EX => RegWrite_rs_EX, RegWrite_rs_MEM => RegWrite_rs_MEM
+                        );
 --
 ------------------------------------------Etapa MEM-------------------------------------------------------------------
 --
 
 ---------------------------------------
 --Usado para añadir las dos nuevas instrucciones
-mutex_MD : mux2_1 port map (lo que sea);
+mutex_MD : mux2_1 port map (DIn0 => BusA_MEM, DIn1 => ALU_out_MEM, ctrl => MuxMD_MEM, Dout => MuxMD_out_MEM );
 
-Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => ALU_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out);
+Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out);
 -- hay que a�adir los campos necesarios a los registros intermedios
 Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => '1', MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM,
-											MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, RW_MEM => RW_MEM, RW_WB => RW_WB );
-mux_busW: mux2_1 port map (Din0 => ALU_out_WB, DIn1 => MDR, ctrl => MemtoReg_WB, Dout => busW);
+											MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, RW_MEM => RW_MEM, RW_WB => RW_WB,
+                      RW_MEM_rs => RW_MEM_rs, RW_WB_rs => RW_WB_rs, MuxMD_out_MEM => MuxMD_out_MEM, MuxMD_out_WB => MuxMD_out_WB,
+                      RegWrite_rs_MEM => RegWrite_rs_MEM, RegWrite_rs_WB => RegWrite_rs_WB);
+
+--
+------------------------------------------Etapa WB-------------------------------------------------------------------
+--
+mux_busW: mux2_1 port map (Din0 => MuxMD_out_WB, DIn1 => MDR, ctrl => MemtoReg_WB, Dout => busW);
 -----------
 -- output no se usa para nada. Est� puesto para que el sistema tenga alguna salida al exterior.
 output <= IR_ID;
