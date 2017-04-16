@@ -214,13 +214,13 @@ COMPONENT Banco_EX
 		end component;
 
 -- Nuestro mutex de 4 entradas
-    COMPONENT mux4_5bits
-    Port (   DIn0 : in  STD_LOGIC_VECTOR (4 downto 0);
-             DIn1 : in  STD_LOGIC_VECTOR (4 downto 0);
-             DIn2 : in  STD_LOGIC_VECTOR (4 downto 0);
-             DIn3 : in  STD_LOGIC_VECTOR (4 downto 0);
+    COMPONENT mux4_32bits
+    Port (   DIn0 : in  STD_LOGIC_VECTOR (31 downto 0);
+             DIn1 : in  STD_LOGIC_VECTOR (31 downto 0);
+             DIn2 : in  STD_LOGIC_VECTOR (31 downto 0);
+             DIn3 : in  STD_LOGIC_VECTOR (31 downto 0);
     			   ctrl : in  STD_LOGIC_VECTOR (1 downto 0);
-             Dout : out  STD_LOGIC_VECTOR (4 downto 0));
+             Dout : out  STD_LOGIC_VECTOR (31 downto 0));
     END COMPONENT;
 
 COMPONENT Banco_MEM
@@ -303,7 +303,7 @@ signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, 
 signal BusW, BusA, BusB, BusA_EX, BusA_MEM, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
 signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_MEM_rs, RW_WB_rs : std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
-signal IR_op_code_EX, IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
+signal IR_op_code_EX, IR_op_code_MEM : STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
@@ -369,9 +369,9 @@ unidad_deteccion_riesgos : HDM port map (op_code_ID => IR_ID(31 downto 26), op_c
 
 --- salidas mutex_busA_salida, mutex_busB_salida
 
-mutex_busA : mux4_5bits port map (DIn0 => BusA, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busA , Dout => mutex_busA_salida);
+mutex_busA : mux4_32bits port map (DIn0 => BusA, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busA , Dout => mutex_busA_salida);
 
-mutex_busB : mux4_5bits port map (DIn0 => BusB, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busB , Dout => mutex_busB_salida);
+mutex_busB : mux4_32bits port map (DIn0 => BusB, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busB , Dout => mutex_busB_salida);
 
 -- Comparación para salto
 Z <= '1' when (mutex_busA_salida=mutex_busB_salida) else '0';
@@ -417,7 +417,7 @@ mux_dst: mux2_5bits port map (Din0 => Reg_Rt_EX, DIn1 => Reg_Rd_EX, ctrl => RegD
 Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_out_MEM, clk => clk, reset => reset, load => '1', MemWrite_EX => MemWrite_EX,
 												MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX, MemWrite_MEM => MemWrite_MEM, MemRead_MEM => MemRead_MEM,
 												MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, BusB_EX => BusB_EX, BusB_MEM => BusB_MEM, RW_EX => RW_EX, RW_MEM => RW_MEM,
-                        IR_op_code_EX => IR_op_code_EX, IR_op_code_MEM => IR_op_code_MEM,Reg_Rs_EX => Reg_Rs_EX,Reg_Rt_EX => Reg_Rt_EX
+                        IR_op_code_EX => IR_op_code_EX, IR_op_code_MEM => IR_op_code_MEM,Reg_Rs_EX => Reg_Rs_EX,Reg_Rt_EX => Reg_Rt_EX,
                         Reg_Rd_EX => Reg_Rd_EX, Reg_Rs_MEM => Reg_Rs_MEM, Reg_Rt_MEM => Reg_Rt_MEM, Reg_Rd_MEM => Reg_Rd_MEM,
                         BusA_EX => BusA_EX, BusA_MEM => BusA_MEM, MuxMD_EX => MuxMD_EX, MuxMD_MEM => MuxMD_MEM,
                         RegWrite_rs_EX => RegWrite_rs_EX, RegWrite_rs_MEM => RegWrite_rs_MEM
@@ -428,7 +428,7 @@ Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_
 
 ---------------------------------------
 --Usado para añadir las dos nuevas instrucciones
-mutex_MD : mux2_1 port map (DIn0 => BusA_MEM, DIn1 => ALU_out_MEM, ctrl => MuxMD_MEM, Dout => MuxMD_out_MEM );
+mutex_MD: mux2_1 port map (DIn0 => BusA_MEM, DIn1 => ALU_out_MEM, ctrl => MuxMD_MEM, Dout => MuxMD_out_MEM );
 
 Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out);
 -- hay que a�adir los campos necesarios a los registros intermedios
