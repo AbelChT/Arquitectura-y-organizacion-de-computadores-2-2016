@@ -2,9 +2,9 @@
 -- Company:
 -- Engineer:
 --
--- Create Date:    15:13:42 04/07/2014
+-- Create Date:    15:13:42 16/04/2017
 -- Design Name:
--- Module Name:    mux4_5bits - Behavioral
+-- Module Name:    mux4_32bits - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool versions:
@@ -29,16 +29,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity mux4_5bits is
-Port (   DIn0 : in  STD_LOGIC_VECTOR (4 downto 0);
-           DIn1 : in  STD_LOGIC_VECTOR (4 downto 0);
-           DIn2 : in  STD_LOGIC_VECTOR (4 downto 0);
-          DIn3 : in  STD_LOGIC_VECTOR (4 downto 0);
+entity mux4_32bits is
+Port (   DIn0 : in  STD_LOGIC_VECTOR (31 downto 0);
+           DIn1 : in  STD_LOGIC_VECTOR (31 downto 0);
+           DIn2 : in  STD_LOGIC_VECTOR (31 downto 0);
+          DIn3 : in  STD_LOGIC_VECTOR (31 downto 0);
 			  ctrl : in  STD_LOGIC_VECTOR (1 downto 0);
-           Dout : out  STD_LOGIC_VECTOR (4 downto 0));
-end mux4_5bits;
+           Dout : out  STD_LOGIC_VECTOR (31 downto 0));
+end mux4_32bits;
 
-architecture Behavioral of mux4_5bits is
+architecture Behavioral of mux4_32bits is
 
 begin
 
