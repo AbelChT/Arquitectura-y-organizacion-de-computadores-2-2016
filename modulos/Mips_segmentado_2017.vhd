@@ -96,6 +96,7 @@ COMPONENT BReg
          BusW : IN  std_logic_vector(31 downto 0);
          BusW_pos : in std_logic_vector (31 downto 0);--entrada del registro con postincremento
          RegWrite : IN  std_logic;
+         RegWrite_rs : in std_logic; -- Habilita el guardado del postincremento
          BusA : OUT  std_logic_vector(31 downto 0);
          BusB : OUT  std_logic_vector(31 downto 0)
         );
@@ -302,10 +303,12 @@ signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, 
 signal BusW, BusA, BusB, BusA_EX, BusA_MEM, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
 signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_MEM_rs, RW_WB_rs : std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
-signal IR_op_code_EX, IR_op_code_ID, IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
+signal IR_op_code_EX, IR_op_code_MEM : out  STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
+signal signal_STOP : STD_LOGIC; -- Indica al procesador que pare un ciclo
+signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion cargada
 
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
@@ -322,15 +325,20 @@ adder_4: adder32 port map (Din0 => PC_out, Din1 => four, Dout => PC4);
 muxPC: mux2_1 port map (Din0 => PC4, DIn1 => Dirsalto_ID, ctrl => PCSrc, Dout => PC_in);
 ------------------------------------------------------------------------------------
 -- si leemos una instrucci�n equivocada tenemos que modificar el c�digo de operaci�n antes de almacenarlo en memoria
-Mem_I: memoriaRAM_I PORT MAP (CLK => CLK, ADDR => PC_out, Din => "00000000000000000000000000000000", WE => '0', RE => '1', Dout => IR_in);
+Mem_I: memoriaRAM_I PORT MAP (CLK => CLK, ADDR => PC_out, Din => "00000000000000000000000000000000", WE => '0', RE => '1', Dout => IR_in_load);
+
+--- Invalidamos la instruccion en fetch en el caso de que se tome el salto
+mux_MI: mux2_1 port map (Din0 => IR_in_load, DIn1 => "00000000000000000000000000000000", ctrl => PCSrc, Dout => IR_in);
+
 ------------------------------------------------------------------------------------
 -- el load vale uno porque este procesador no para nunca. Si queremos que una instrucci�n no avance habr� que poner el load a '0'
 Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => '1', IR_ID => IR_ID, PC4_ID => PC4_ID);
+
 --
 ------------------------------------------Etapa ID-------------------------------------------------------------------
 -- Hay que a�adir un nuevo puerto de escritura al banco de registros para la instrucci�n de post-incremento
-Register_bank: BReg PORT MAP (clk => clk, reset => reset, RA => IR_ID(25 downto 21), RB => IR_ID(20 downto 16), RW => RW_WB, BusW => BusW,
-									RegWrite => RegWrite_WB, BusA => BusA, BusB => BusB);
+Register_bank: BReg PORT MAP (clk => clk, reset => reset, RA => IR_ID(25 downto 21), RB => IR_ID(20 downto 16), RW => RW_WB, RW_pos => RW_WB_rs,
+ BusW => BusW, BusW_pos => ALU_out_WB, RegWrite => RegWrite_WB, RegWrite_rs => RegWrite_rs_WB, BusA => BusA, BusB => BusB);
 -------------------------------------------------------------------------------------
 sign_ext: Ext_signo port map (inm => IR_ID(15 downto 0), inm_ext => inm_ext);
 
@@ -338,36 +346,17 @@ two_bits_shift: two_bits_shifter	port map (Din => inm_ext, Dout => inm_ext_x4);
 
 adder_dir: adder32 port map (Din0 => inm_ext_x4, Din1 => PC4_ID, Dout => Dirsalto_ID);
 
-Z <= '1' when (busA=busB) else '0';
 
 ------------------------gesti�n de la parada en ID-----------------------------------
 -- incluir aqu� el c�digo que detecta los riesgos de datos
 
--- operación actual = IR_ID(31 downto 26)
--- operación un ciclo por delante =
--- operación dos ciclos por delante =
-
--- registro rs usado en este ciclo =
--- registro rs usado un ciclo antes =
--- registro rs usado dos ciclos antes =
-
--- registro rt usado en este ciclo =
--- registro rt usado un ciclo antes =
--- registro rt usado dos ciclos antes =
-
--- registro rd usado en este ciclo =
--- registro rd usado un ciclo antes =
--- registro rd usado dos ciclos antes =
-
-
-mtx_busA <= '00' when () else
-            '01' when () else
-            '10' when () else
-            '11' when others;
-mtx_busB <= '00' when () else
-            '01' when () else
-            '10' when () else
-            '11' when others;
+unidad_deteccion_riesgos : HDM port map (op_code_ID => IR_ID(31 downto 26), op_code_EX => IR_op_code_EX, op_code_MEM => IR_op_code_MEM,
+                              Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rs_ID => IR_ID(25 downto 21),
+                              Reg_Rs_EX => Reg_Rs_EX , Reg_Rt_EX => Reg_Rt_EX , Reg_Rd_EX => Reg_Rd_EX,
+                              Reg_Rs_MEM => Reg_Rs_MEM , Reg_Rt_MEM => Reg_Rt_MEM , Reg_Rd_MEM => Reg_Rd_MEM,
+                              mtx_busA => mtx_busA, mtx_busB => mtx_busB,
+                              signal_STOP => signal_STOP
+                              );
 
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
@@ -384,14 +373,13 @@ mutex_busA : mux4_5bits port map (DIn0 => BusA, DIn1 => ALU_out_EX, DIn2 => ALU_
 
 mutex_busB : mux4_5bits port map (DIn0 => BusB, DIn1 => ALU_out_EX, DIn2 => ALU_out_MEM , DIn3 => Mem_out , ctrl => mtx_busB , Dout => mutex_busB_salida);
 
--- Falta hacer la parte de modificar la uc y meter en todos los bancos la propagación de la uc
--- Y a partir de la siguiente fase
+-- Comparación para salto
+Z <= '1' when (mutex_busA_salida=mutex_busB_salida) else '0';
 
 -------------------------------------------------------------------------------------
 -- Deber�is incluir la nueva se�al Update_Rs en la unidad de control
 ---
 --MuxMD_ID, RegWrite_rs_ID : out  STD_LOGIC; -- Mutex añadido antes de la memoria de datos
-
 
 UC_seg: UC port map (IR_op_code => IR_ID(31 downto 26), Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
 							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID , MuxMD => MuxMD_ID , RegWrite_rs => RegWrite_rs_ID);
