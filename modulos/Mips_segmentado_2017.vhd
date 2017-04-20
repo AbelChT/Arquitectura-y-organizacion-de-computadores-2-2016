@@ -144,8 +144,8 @@ component HDM is
 	Reg_Rt_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
 	Reg_Rd_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
 
-	mtx_busA : out  STD_LOGIC_VECTOR (1 downto 0);
-	mtx_busB : out  STD_LOGIC_VECTOR (1 downto 0);
+	mux_busA : out  STD_LOGIC_VECTOR (1 downto 0);
+	mux_busB : out  STD_LOGIC_VECTOR (1 downto 0);
 	signal_STOP : out  STD_LOGIC
   );
   END COMPONENT;
@@ -301,7 +301,7 @@ signal load_PC, PCSrc, RegWrite_ID, RegWrite_EX, RegWrite_MEM, RegWrite_WB, Z, B
 signal MemtoReg_ID, MemtoReg_EX, MemtoReg_MEM, MemtoReg_WB, MemWrite_ID, MemWrite_EX, MemWrite_MEM, MemRead_ID, MemRead_EX, MemRead_MEM: std_logic;
 signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, Mux_out, MuxMD_out_MEM, MuxMD_out_WB : std_logic_vector(31 downto 0);
 signal BusW, BusA, BusB, BusA_EX, BusA_MEM, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
-signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_MEM_rs, RW_WB_rs : std_logic_vector(4 downto 0);
+signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_WB_rs : std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
 signal IR_op_code_EX, IR_op_code_MEM : STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
@@ -354,7 +354,7 @@ unidad_deteccion_riesgos : HDM port map (op_code_ID => IR_ID(31 downto 26), op_c
                               Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rs_ID => IR_ID(25 downto 21),
                               Reg_Rs_EX => Reg_Rs_EX , Reg_Rt_EX => Reg_Rt_EX , Reg_Rd_EX => Reg_Rd_EX,
                               Reg_Rs_MEM => Reg_Rs_MEM , Reg_Rt_MEM => Reg_Rt_MEM , Reg_Rd_MEM => Reg_Rd_MEM,
-                              mtx_busA => mtx_busA, mtx_busB => mtx_busB,
+                              mux_busA => mtx_busA, mux_busB => mtx_busB,
                               signal_STOP => signal_STOP
                               );
 
@@ -434,7 +434,7 @@ Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM
 -- hay que a�adir los campos necesarios a los registros intermedios
 Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => '1', MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM,
 											MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, RW_MEM => RW_MEM, RW_WB => RW_WB,
-                      RW_MEM_rs => RW_MEM_rs, RW_WB_rs => RW_WB_rs, MuxMD_out_MEM => MuxMD_out_MEM, MuxMD_out_WB => MuxMD_out_WB,
+                      RW_MEM_rs => Reg_Rs_MEM, RW_WB_rs => RW_WB_rs, MuxMD_out_MEM => MuxMD_out_MEM, MuxMD_out_WB => MuxMD_out_WB,
                       RegWrite_rs_MEM => RegWrite_rs_MEM, RegWrite_rs_WB => RegWrite_rs_WB);
 
 --
