@@ -299,7 +299,7 @@ signal IR_op_code_ID, IR_op_code_EX, IR_op_code_MEM : STD_LOGIC_VECTOR (5 downto
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
-signal signal_STOP : STD_LOGIC; -- Indica al procesador que pare un ciclo
+signal signal_STOP , load_Banco_IF_ID : STD_LOGIC; -- Indica al procesador que pare un ciclo
 signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion cargada
 
 begin
@@ -325,7 +325,9 @@ mux_MI: mux2_1 port map (Din0 => IR_in_load, DIn1 => "00000000000000000000000000
 
 ------------------------------------------------------------------------------------
 -- el load vale uno porque este procesador no para nunca. Si queremos que una instrucci�n no avance habr� que poner el load a '0'
-Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => '1', IR_ID => IR_ID, PC4_ID => PC4_ID);
+load_Banco_IF_ID <= '1' when (signal_STOP = '0') else
+           '0';
+Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => load_Banco_IF_ID, IR_ID => IR_ID, PC4_ID => PC4_ID);
 
 --
 ------------------------------------------Etapa ID-------------------------------------------------------------------
