@@ -57,11 +57,13 @@ architecture Behavioral of HDM is
 begin
 
 mux_busA <= "01" when (
-		(op_code_ID /= "000000" AND ((op_code_EX = "000001" AND Reg_Rs_ID = Reg_Rd_EX) OR 
+
+		(op_code_ID /= "000000" AND ((op_code_EX = "000001" AND Reg_Rs_ID = Reg_Rd_EX) OR
+
 		((op_code_EX = "001010" OR op_code_EX = "001011") AND Reg_Rs_ID = Reg_Rs_EX)))
 		) else
 	"10" when (
-		(op_code_ID /= "000000" AND ((op_code_MEM = "000001" AND Reg_Rs_ID = Reg_Rd_MEM) OR 
+		(op_code_ID /= "000000" AND ((op_code_MEM = "000001" AND Reg_Rs_ID = Reg_Rd_MEM) OR
 		((op_code_MEM = "001010" OR op_code_MEM = "001011") AND Reg_Rs_ID = Reg_Rs_MEM)))
 		) else
 	"11" when (
@@ -70,7 +72,9 @@ mux_busA <= "01" when (
 	"00";
 
 mux_busB <= 	"01" when (
-		((op_code_ID = "000001" OR op_code_ID = "000100" OR op_code_ID = "000011" OR op_code_ID = "001011") AND ((op_code_EX = "000001" AND Reg_Rt_ID = Reg_Rd_EX) OR 
+
+		((op_code_ID = "000001" OR op_code_ID = "000100" OR op_code_ID = "000011" OR op_code_ID = "001011") AND ((op_code_EX = "000001" AND Reg_Rt_ID = Reg_Rd_EX) OR
+
 		((op_code_EX = "001010" OR op_code_EX = "001011") AND Reg_Rt_ID = Reg_Rs_EX)))
 		) else
 	"10" when (
@@ -82,7 +86,7 @@ mux_busB <= 	"01" when (
 	"00";
 
 signal_STOP <=	'1' when (
-		((op_code_ID = "000001" OR op_code_ID = "000100" OR op_code_ID = "000011" OR op_code_ID = "001011") AND (op_code_EX = "001010" OR op_code_EX = "000010") AND Reg_Rt_ID = Reg_Rt_EX) OR 
+		((op_code_ID = "000001" OR op_code_ID = "000100" OR op_code_ID = "000011" OR op_code_ID = "001011") AND (op_code_EX = "001010" OR op_code_EX = "000010") AND Reg_Rt_ID = Reg_Rt_EX) OR
 		(op_code_ID /= "000000" AND (op_code_EX = "000010" OR op_code_EX = "001010") AND Reg_Rs_ID = Reg_Rt_EX)
 		) else
 	'0';

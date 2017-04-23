@@ -28,22 +28,7 @@ component reg32 is
            load : in  STD_LOGIC;
            Dout : out  STD_LOGIC_VECTOR (31 downto 0));
 end component;
----------------------------------------------------------------
--- Interfaz del componente que deb�is dise�ar
-component branch_predictor is
- Port ( 	clk : in  STD_LOGIC;
-			reset : in  STD_LOGIC;
- 			-- Puerto de lectura se accede con los 8 bits menos significativos de PC+4 sumado en IF
-			PC4 : in  STD_LOGIC_VECTOR (7 downto 0);
-			branch_address_out : out  STD_LOGIC_VECTOR (31 downto 0); -- direcci�n de salto
-			prediction_out : out  STD_LOGIC; -- indica si hay que saltar a la direcci�n de salto (1) o no (0)
-         	-- Puerto de escritura se env�a PC+4, la direcci�n de salto y la predicci�n, y se activa la se�al update_prediction
-			PC4_ID:  in  STD_LOGIC_VECTOR (7 downto 0); -- Etiqueta: 8 bits menos significativos del PC+4 de la etapa ID
-			prediction_in : in  STD_LOGIC; -- predicci�n
-			branch_address_in : in  STD_LOGIC_VECTOR (31 downto 0); -- direcci�n de salto
-       		update:  in  STD_LOGIC); -- da la orden de actualizar la informaci�n del predictor
-end component;
---------------------------------------------------------------
+
 component adder32 is
     Port ( Din0 : in  STD_LOGIC_VECTOR (31 downto 0);
            Din1 : in  STD_LOGIC_VECTOR (31 downto 0);
@@ -213,6 +198,13 @@ COMPONENT Banco_EX
 				   Dout : out  STD_LOGIC_VECTOR (4 downto 0));
 		end component;
 
+    component mux2_6bits is
+       Port (   DIn0 : in  STD_LOGIC_VECTOR (5 downto 0);
+            DIn1 : in  STD_LOGIC_VECTOR (5 downto 0);
+            ctrl : in  STD_LOGIC;
+            Dout : out  STD_LOGIC_VECTOR (5 downto 0));
+     end component;
+
 -- Nuestro mutex de 4 entradas
     COMPONENT mux4_32bits
     Port (   DIn0 : in  STD_LOGIC_VECTOR (31 downto 0);
@@ -303,11 +295,11 @@ signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, 
 signal BusW, BusA, BusB, BusA_EX, BusA_MEM, BusB_EX, BusB_MEM, inm_ext, inm_ext_x4, ALU_out_EX, ALU_out_MEM, ALU_out_WB, Mem_out, MDR : std_logic_vector(31 downto 0);
 signal RW_EX, RW_MEM, RW_WB, Reg_Rd_EX, Reg_Rt_EX, Reg_Rs_EX, Reg_Rs_MEM, Reg_Rt_MEM, Reg_Rd_MEM, RW_WB_rs : std_logic_vector(4 downto 0);
 signal ALUctrl_ID, ALUctrl_EX : std_logic_vector(2 downto 0);
-signal IR_op_code_EX, IR_op_code_MEM : STD_LOGIC_VECTOR (5 downto 0);
+signal IR_op_code_ID, IR_op_code_EX, IR_op_code_MEM : STD_LOGIC_VECTOR (5 downto 0);
 signal mtx_busA, mtx_busB: std_logic_vector(1 downto 0); -- Señales para controlar los mutex nuevos
 signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
-signal signal_STOP : STD_LOGIC; -- Indica al procesador que pare un ciclo
+signal signal_STOP , load_Banco_IF_ID : STD_LOGIC; -- Indica al procesador que pare un ciclo
 signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion cargada
 
 begin
@@ -315,7 +307,8 @@ pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, 
 ------------------------------------------------------------------------------------
 -- vale '1' porque en la versi�n actual el procesador no para nunca
 -- Si queremos detener una instrucci�n en la etapa fetch habr� que ponerlo a '0'
-load_PC <= '1';
+load_PC <= '1' when (signal_STOP = '0') else
+           '0';
 ------------------------------------------------------------------------------------
 four <= "00000000000000000000000000000100";
 
@@ -332,7 +325,9 @@ mux_MI: mux2_1 port map (Din0 => IR_in_load, DIn1 => "00000000000000000000000000
 
 ------------------------------------------------------------------------------------
 -- el load vale uno porque este procesador no para nunca. Si queremos que una instrucci�n no avance habr� que poner el load a '0'
-Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => '1', IR_ID => IR_ID, PC4_ID => PC4_ID);
+load_Banco_IF_ID <= '1' when (signal_STOP = '0') else
+           '0';
+Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => load_Banco_IF_ID, IR_ID => IR_ID, PC4_ID => PC4_ID);
 
 --
 ------------------------------------------Etapa ID-------------------------------------------------------------------
@@ -381,7 +376,10 @@ Z <= '1' when (mutex_busA_salida=mutex_busB_salida) else '0';
 ---
 --MuxMD_ID, RegWrite_rs_ID : out  STD_LOGIC; -- Mutex añadido antes de la memoria de datos
 
-UC_seg: UC port map (IR_op_code => IR_ID(31 downto 26), Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
+mux_op_code_ID: mux2_6bits port map (Din0 => IR_ID(31 downto 26), DIn1 => "000000", ctrl => signal_STOP, Dout => IR_op_code_ID);
+
+
+UC_seg: UC port map (IR_op_code => IR_op_code_ID, Branch => Branch, RegDst => RegDst_ID,  ALUSrc => ALUSrc_ID, MemWrite => MemWrite_ID,
 							MemRead => MemRead_ID, MemtoReg => MemtoReg_ID, RegWrite => RegWrite_ID , MuxMD => MuxMD_ID , RegWrite_rs => RegWrite_rs_ID);
 -------------------------------------------------------------------------------------
 -- Ahora mismo s�lo esta implementada la instrucci�n de salto BEQ. Si es una instrucci�n de salto y se activa la se�al Z se carga la direcci�n de salto, sino PC+4
@@ -389,18 +387,19 @@ PCSrc <= Branch AND Z;
 -- si la operaci�n es aritm�tica (es decir: IR_ID(31 downto 26)= "000001") miro el campo funct
 -- como s�lo hay 4 operaciones en la alu, basta con los bits menos significativos del campo func de la instrucci�n
 -- si no es aritm�tica le damos el valor de la suma (000)
-ALUctrl_ID <= IR_ID(2 downto 0) when IR_ID(31 downto 26)= "000001" else "000";
+ALUctrl_ID <= IR_ID(2 downto 0) when IR_op_code_ID= "000001" else "000";
 -- hay que a�adir los campos necesarios a los registros intermedios
 
 -- instruccion_ex
 -- IR_ID(31 downto 26) Instruccion actual
 -- IR_ID(25 downto 21) Rs
+
 Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => '1', busA => mutex_busA_salida, busB => mutex_busB_salida, busA_EX => busA_EX, busB_EX => busB_EX,
 											RegDst_ID => RegDst_ID, ALUSrc_ID => ALUSrc_ID, MemWrite_ID => MemWrite_ID, MemRead_ID => MemRead_ID,
 											MemtoReg_ID => MemtoReg_ID, RegWrite_ID => RegWrite_ID, RegDst_EX => RegDst_EX, ALUSrc_EX => ALUSrc_EX,
 											MemWrite_EX => MemWrite_EX, MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX,
 											ALUctrl_ID => ALUctrl_ID, ALUctrl_EX => ALUctrl_EX, inm_ext => inm_ext, inm_ext_EX=> inm_ext_EX,
-                      IR_op_code_ID=>IR_ID(31 downto 26) , IR_op_code_EX => IR_op_code_EX,
+                      IR_op_code_ID=>IR_op_code_ID , IR_op_code_EX => IR_op_code_EX,
 											Reg_Rt_ID => IR_ID(20 downto 16), Reg_Rd_ID => IR_ID(15 downto 11), Reg_Rs_ID => IR_ID(25 downto 21),
                       Reg_Rt_EX => Reg_Rt_EX, Reg_Rd_EX => Reg_Rd_EX , Reg_Rs_EX => Reg_Rs_EX, MuxMD_EX => MuxMD_EX , MuxMD_ID => MuxMD_ID,
                       RegWrite_rs_ID => RegWrite_rs_ID , RegWrite_rs_EX => RegWrite_rs_EX

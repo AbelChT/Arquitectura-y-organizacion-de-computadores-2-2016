@@ -4,7 +4,7 @@
 --
 -- Create Date:    15:13:42 04/07/2014
 -- Design Name:
--- Module Name:    mux2_5bits - Behavioral 
+-- Module Name:    mux2_6bits - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool versions:
@@ -29,14 +29,14 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity mux2_5bits is
-Port (   DIn0 : in  STD_LOGIC_VECTOR (4 downto 0);
-           DIn1 : in  STD_LOGIC_VECTOR (4 downto 0);
+entity mux2_6bits is
+Port (   DIn0 : in  STD_LOGIC_VECTOR (5 downto 0);
+           DIn1 : in  STD_LOGIC_VECTOR (5 downto 0);
 			  ctrl : in  STD_LOGIC;
-           Dout : out  STD_LOGIC_VECTOR (4 downto 0));
-end mux2_5bits;
+           Dout : out  STD_LOGIC_VECTOR (5 downto 0));
+end mux2_6bits;
 
-architecture Behavioral of mux2_5bits is
+architecture Behavioral of mux2_6bits is
 
 begin
 
