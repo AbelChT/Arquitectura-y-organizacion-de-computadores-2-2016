@@ -41,7 +41,7 @@ end memoriaRAM_D;
 
 architecture Behavioral of memoriaRAM_D is
 type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
-signal RAM : RamType := (  X"00000030", X"00000020", X"00000010", X"FFFFFFFF", X"00000005", X"0000000F", X"000F0000", X"F0000000", -- posiciones 0,1,2,3,4,5,6,7
+signal RAM : RamType := (  X"00000010", X"00000020", X"00000010", X"FFFFFFFF", X"00000005", X"0000000F", X"000F0000", X"F0000000", -- posiciones 0,1,2,3,4,5,6,7
 									X"00000007", X"00000008", X"00000009", X"0000000A", X"AA995566", X"20000000", X"30008001", X"00000007", --posicones 8,9,...
 									X"20000000", X"20000000", X"30018001", X"02AD6093", X"30008001", X"00000001", X"20000000", X"30002001",
 									X"00010900", X"20000000", X"30004000", X"5000102D", X"01000300", X"80000400", X"10000000", X"00000000",
