@@ -342,6 +342,7 @@ palabra <= palabra_UC;
 			ready <= '0';
 			mux_origen <= '1';
 			burst <= '1';
+			MC_send_addr <= '1';
 		
 			next_state <= fallo_lectura_2_ready
 		 else if(bus_wait='1') then
