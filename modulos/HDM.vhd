@@ -46,9 +46,13 @@ entity HDM is
 	Reg_Rt_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
 	Reg_Rd_MEM : in  STD_LOGIC_VECTOR (4 downto 0);
 
+  Mem_ready: in STD_LOGIC; -- signal ready de MD
+
 	mux_busA : out  STD_LOGIC_VECTOR (1 downto 0);
 	mux_busB : out  STD_LOGIC_VECTOR (1 downto 0);
-	signal_STOP : out  STD_LOGIC
+	signal_STOP : out  STD_LOGIC; -- Stop producido por un riesgo de datos
+  signal_STOP_Mem : out  STD_LOGIC -- Stop producido al esperar a MD
+
   );
 end HDM;
 
@@ -86,4 +90,7 @@ signal_STOP <=	'1' when (
 		(op_code_ID /= "000000" AND (op_code_EX = "000010" OR op_code_EX = "001010") AND Reg_Rs_ID = Reg_Rt_EX)
 		) else
 	'0';
+
+signal_STOP_Mem <=	'1' when ( (op_code_MEM = "000010" OR op_code_MEM = "000011" OR op_code_MEM = "001010" OR op_code_MEM = "001011") AND Mem_ready = '0' ) else '0';
+
 end Behavioral;

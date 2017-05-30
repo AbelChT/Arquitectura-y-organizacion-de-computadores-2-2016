@@ -42,12 +42,14 @@ component mux2_1 is
            Dout : out  STD_LOGIC_VECTOR (31 downto 0));
 end component;
 
-component memoriaRAM_D is port (
+component MD_mas_MC is port (
 		  CLK : in std_logic;
+      reset: in std_logic; -- s�lo resetea el controlador de DMA
 		  ADDR : in std_logic_vector (31 downto 0); --Dir
           Din : in std_logic_vector (31 downto 0);--entrada de datos para el puerto de escritura
           WE : in std_logic;		-- write enable
 		  RE : in std_logic;		-- read enable
+      Mem_ready: out std_logic; -- indica si podemos hacer la operaci�n solicitada en el ciclo actual
 		  Dout : out std_logic_vector (31 downto 0));
 end component;
 
@@ -131,7 +133,9 @@ component HDM is
 
 	mux_busA : out  STD_LOGIC_VECTOR (1 downto 0);
 	mux_busB : out  STD_LOGIC_VECTOR (1 downto 0);
-	signal_STOP : out  STD_LOGIC
+	signal_STOP : out  STD_LOGIC;
+  Mem_ready: in STD_LOGIC; -- signal ready de MD
+  signal_STOP_Mem : out  STD_LOGIC -- Stop producido al esperar a MD
   );
   END COMPONENT;
 
@@ -301,6 +305,8 @@ signal mutex_busA_salida, mutex_busB_salida : std_logic_vector(31 downto 0);
 signal MuxMD_ID, RegWrite_rs_ID, MuxMD_EX, MuxMD_MEM, RegWrite_rs_EX, RegWrite_rs_MEM, RegWrite_rs_WB  : STD_LOGIC; -- Mutex añadido antes de la memoria de datos
 signal signal_STOP , load_Banco_IF_ID : STD_LOGIC; -- Indica al procesador que pare un ciclo
 signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion cargada
+signal Mem_ready: std_logic;
+signal signal_STOP_Mem : STD_LOGIC; -- Stop producido al esperar a MD
 
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
@@ -350,9 +356,8 @@ unidad_deteccion_riesgos : HDM port map (op_code_ID => IR_ID(31 downto 26), op_c
                               Reg_Rs_EX => Reg_Rs_EX , Reg_Rt_EX => Reg_Rt_EX , Reg_Rd_EX => Reg_Rd_EX,
                               Reg_Rs_MEM => Reg_Rs_MEM , Reg_Rt_MEM => Reg_Rt_MEM , Reg_Rd_MEM => Reg_Rd_MEM,
                               mux_busA => mtx_busA, mux_busB => mtx_busB,
-                              signal_STOP => signal_STOP
+                              signal_STOP => signal_STOP, Mem_ready => Mem_ready,signal_STOP_Mem => signal_STOP_Mem
                               );
-
 -------------------------------------------------------------------------------------
 ------------------------Unidad de anticipaci�n de operandos--------------------------
 -- incluir aqu� el c�digo gestiona la anticipaci�n de operandos
@@ -429,7 +434,7 @@ Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_
 --Usado para añadir las dos nuevas instrucciones
 mutex_MD: mux2_1 port map (DIn0 => BusA_MEM, DIn1 => ALU_out_MEM, ctrl => MuxMD_MEM, Dout => MuxMD_out_MEM );
 
-Mem_D: memoriaRAM_D PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out);
+Mem_D: MD_mas_MC PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out, Mem_ready => Mem_ready , reset => reset);
 -- hay que a�adir los campos necesarios a los registros intermedios
 Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => '1', MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM,
 											MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, RW_MEM => RW_MEM, RW_WB => RW_WB,
