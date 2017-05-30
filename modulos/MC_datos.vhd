@@ -178,7 +178,7 @@ mask			<= 	"0001" when dir_cjto="00" else
 						"1000" when dir_cjto="11" else
 						"0000";
 valid_bits_in <= valid_bits_out OR mask;
-bits_validez: reg4 port map(	DIN_correcto => valid_bits_in, clk => clk, reset => reset, load => MC_tags_WE, Dout => valid_bits_out);
+bits_validez: reg4 port map(	Din => valid_bits_in, clk => clk, reset => reset, load => MC_tags_WE, Dout => valid_bits_out);
 --------------------------------------------------------------------------------------------------
 valid_bit <= 	valid_bits_out(0) when dir_cjto="00" else
 						valid_bits_out(1) when dir_cjto="01" else
