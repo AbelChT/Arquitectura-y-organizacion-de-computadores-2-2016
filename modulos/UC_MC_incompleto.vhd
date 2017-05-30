@@ -117,23 +117,23 @@ palabra <= palabra_UC;
    begin
      -- valores por defecto, si no se asigna otro valor en un estado valdr�n lo que se asigna aqu�
      -- As� no hace falta poner el valor de todo en todos los casos
-       MC_WE <= '0';
-       bus_RE <= '0';
-       bus_WE <= '0';
-       MC_tags_WE <= '0';
-       MC_RE <= '0';
-       ready <= '1';
-       mux_origen <= '0';
-       MC_send_addr <= '0';
-       MC_send_data <= '0';
-       burst <= '0';
-       next_state <= state;
-       count_enable <= '0';
-       mux_MC_DOUT <= '0';
-       mux_ADDR <= '0';
-       save_ADDR <= '0';
-       mux_DIN <= '0';
-       save_DIN <= '0';
+		MC_WE <= '0';
+		bus_RE <= '0';
+		bus_WE <= '0';
+		MC_tags_WE <= '0';
+		MC_RE <= '0';
+		ready <= '1';
+		mux_origen <= '0';
+		MC_send_addr <= '0';
+		MC_send_data <= '0';
+		burst <= '0';
+		next_state <= state;
+		count_enable <= '0';
+		mux_MC_DOUT <= '0';
+		mux_ADDR <= '0';
+		save_ADDR <= '0';
+		mux_DIN <= '0';
+		save_DIN <= '0';
 
        --falta palabra
 
@@ -145,6 +145,8 @@ palabra <= palabra_UC;
        --fallo_lectura_3_ready (q6)
        --fallo_lectura_4_palabra_no_servida (q4)
        --fallo_lectura_4_ready (q7)
+	   --escritura_pedida (q8)
+	   --preparacion_lectura_wm (q9)
 
        case state is
          when Inicial =>
@@ -161,8 +163,17 @@ palabra <= palabra_UC;
             mux_ADDR <= '1';
             save_ADDR <= '1';
             next_state <= fallo_lectura_1;
-          elsif()
-            -- Casos de fallo en lectura
+          elsif(RE = '0' AND WE = '1')
+            -- Casos de fallo en escritura
+			bus_WE <= '1';
+			ready <= '0';
+			MC_send_addr <= '1';
+			MC_send_data <= '1';
+			mux_ADDR <= '1';
+			save_ADDR <= '1';
+			mux_DIN <= '1';
+			save_DIN <= '1';
+			next_state <= preparacion_lectura_wm;
           else
             -- Nada, ya que nada llegara a aqui
           end if;
@@ -302,6 +313,46 @@ palabra <= palabra_UC;
            count_enable <= '1'; -- revisar
            next_state <= Inicial;
          end if;
+		 
+		 ---------------------------------------
+         ---------------------------------------
+         when escritura_pedida => -- q8 -
+         if (bus_wait='1') then
+			bus_WE <= '1';
+			ready <= '0';
+         else if (hit = '1') then
+			MC_WE <= '1';
+			ready <= '0';
+           next_state <= Inicial;
+		 else
+			bus_RE <= '1';
+			ready <= '0';
+			burst <= '1';
+			next_state <= preparacion_lectura_wm
+         end if;
+		 
+		 
+		 
+		 ---------------------------------------
+         ---------------------------------------
+         when preparacion_lectura_wm => -- q9 -
+         if (bus_wait='0') then
+			MC_WE <= '1';
+			bus_RE <= '1';
+			ready <= '0';
+			mux_origen <= '1';
+			burst <= '1';
+			MC_send_addr <= '1';
+		
+			next_state <= fallo_lectura_2_ready
+		 else if(bus_wait='1') then
+			bus_RE <= '1';
+			ready <= '0';
+			burst <= '1';
+			next_state <= state;
+         end if;
+		 
+		 
          when others =>
          -- Aqui nunca deberia de llegar
        end case;
