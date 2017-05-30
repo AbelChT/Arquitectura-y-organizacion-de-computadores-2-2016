@@ -307,13 +307,14 @@ signal signal_STOP , load_Banco_IF_ID : STD_LOGIC; -- Indica al procesador que p
 signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion cargada
 signal Mem_ready: std_logic;
 signal signal_STOP_Mem : STD_LOGIC; -- Stop producido al esperar a MD
+signal load_Banco_ID_EX, load_Banco_EX_MEM, load_Banco_MEM_WB : STD_LOGIC; -- Indica al procesador que pare un ciclo
 
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
 ------------------------------------------------------------------------------------
 -- vale '1' porque en la versi�n actual el procesador no para nunca
 -- Si queremos detener una instrucci�n en la etapa fetch habr� que ponerlo a '0'
-load_PC <= '1' when (signal_STOP = '0') else
+load_PC <= '1' when (signal_STOP = '0' AND signal_STOP_Mem = '0') else
            '0';
 ------------------------------------------------------------------------------------
 four <= "00000000000000000000000000000100";
@@ -331,7 +332,7 @@ mux_MI: mux2_1 port map (Din0 => IR_in_load, DIn1 => "00000000000000000000000000
 
 ------------------------------------------------------------------------------------
 -- el load vale uno porque este procesador no para nunca. Si queremos que una instrucci�n no avance habr� que poner el load a '0'
-load_Banco_IF_ID <= '1' when (signal_STOP = '0') else
+load_Banco_IF_ID <= '1' when (signal_STOP = '0' AND signal_STOP_Mem = '0') else
            '0';
 Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset, load => load_Banco_IF_ID, IR_ID => IR_ID, PC4_ID => PC4_ID);
 
@@ -399,7 +400,9 @@ ALUctrl_ID <= IR_ID(2 downto 0) when IR_op_code_ID= "000001" else "000";
 -- IR_ID(31 downto 26) Instruccion actual
 -- IR_ID(25 downto 21) Rs
 
-Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => '1', busA => mutex_busA_salida, busB => mutex_busB_salida, busA_EX => busA_EX, busB_EX => busB_EX,
+load_Banco_ID_EX <= '1' when (signal_STOP_Mem = '0') else
+           '0';
+Banco_ID_EX: Banco_EX PORT MAP ( clk => clk, reset => reset, load => load_Banco_ID_EX, busA => mutex_busA_salida, busB => mutex_busB_salida, busA_EX => busA_EX, busB_EX => busB_EX,
 											RegDst_ID => RegDst_ID, ALUSrc_ID => ALUSrc_ID, MemWrite_ID => MemWrite_ID, MemRead_ID => MemRead_ID,
 											MemtoReg_ID => MemtoReg_ID, RegWrite_ID => RegWrite_ID, RegDst_EX => RegDst_EX, ALUSrc_EX => ALUSrc_EX,
 											MemWrite_EX => MemWrite_EX, MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX,
@@ -418,7 +421,11 @@ ALU_MIPs: ALU PORT MAP ( DA => BusA_EX, DB => Mux_out, ALUctrl => ALUctrl_EX, Do
 
 mux_dst: mux2_5bits port map (Din0 => Reg_Rt_EX, DIn1 => Reg_Rd_EX, ctrl => RegDst_EX, Dout => RW_EX);
 -- hay que a�adir los campos necesarios a los registros intermedios
-Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_out_MEM, clk => clk, reset => reset, load => '1', MemWrite_EX => MemWrite_EX,
+
+load_Banco_EX_MEM <= '1' when (signal_STOP_Mem = '0') else
+           '0';
+
+Banco_EX_MEM: Banco_MEM PORT MAP ( ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_out_MEM, clk => clk, reset => reset, load => load_Banco_EX_MEM, MemWrite_EX => MemWrite_EX,
 												MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX, MemWrite_MEM => MemWrite_MEM, MemRead_MEM => MemRead_MEM,
 												MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, BusB_EX => BusB_EX, BusB_MEM => BusB_MEM, RW_EX => RW_EX, RW_MEM => RW_MEM,
                         IR_op_code_EX => IR_op_code_EX, IR_op_code_MEM => IR_op_code_MEM,Reg_Rs_EX => Reg_Rs_EX,Reg_Rt_EX => Reg_Rt_EX,
@@ -436,7 +443,10 @@ mutex_MD: mux2_1 port map (DIn0 => BusA_MEM, DIn1 => ALU_out_MEM, ctrl => MuxMD_
 
 Mem_D: MD_mas_MC PORT MAP (CLK => CLK, ADDR => MuxMD_out_MEM, Din => BusB_MEM, WE => MemWrite_MEM, RE => MemRead_MEM, Dout => Mem_out, Mem_ready => Mem_ready , reset => reset);
 -- hay que a�adir los campos necesarios a los registros intermedios
-Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => '1', MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM,
+
+load_Banco_MEM_WB <= '1' when (signal_STOP_Mem = '0') else
+           '0';
+Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => load_Banco_MEM_WB, MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM,
 											MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, RW_MEM => RW_MEM, RW_WB => RW_WB,
                       RW_MEM_rs => Reg_Rs_MEM, RW_WB_rs => RW_WB_rs, MuxMD_out_MEM => MuxMD_out_MEM, MuxMD_out_WB => MuxMD_out_WB,
                       RegWrite_rs_MEM => RegWrite_rs_MEM, RegWrite_rs_WB => RegWrite_rs_WB);
