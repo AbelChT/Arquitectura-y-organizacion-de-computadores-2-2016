@@ -145,6 +145,7 @@ palabra <= palabra_UC;
        --fallo_lectura_3_ready (q6)
        --fallo_lectura_4_palabra_no_servida (q4)
        --fallo_lectura_4_ready (q7)
+	   --escritura_pedida (q8)
 
        case state is
          when Inicial =>
@@ -161,8 +162,9 @@ palabra <= palabra_UC;
             mux_ADDR <= '1';
             save_ADDR <= '1';
             next_state <= fallo_lectura_1;
-          elsif()
-            -- Casos de fallo en lectura
+          elsif(RE = '0' AND WE = '1')
+            -- Casos de fallo en escritura
+			next_state <= escritura_pedida;
           else
             -- Nada, ya que nada llegara a aqui
           end if;
@@ -302,6 +304,27 @@ palabra <= palabra_UC;
            count_enable <= '1'; -- revisar
            next_state <= Inicial;
          end if;
+		 
+		 ---------------------------------------
+         ---------------------------------------
+         when escritura_pedida => -- q8 -
+         if (bus_wait='1') then
+			
+         else if (hit = '1')
+           next_state <= Inicial;
+		 else if(hit = '0')
+			next_state <= escritura_pedida_2
+         end if;
+		 
+		 ---------------------------------------
+         ---------------------------------------
+         when escritura_pedida_2 => -- q9 -
+         if (bus_wait='0') then
+			
+			next_state <= fallo_lectura_2_ready
+         end if;
+		 
+		 
          when others =>
          -- Aqui nunca deberia de llegar
        end case;
