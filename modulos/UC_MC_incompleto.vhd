@@ -69,7 +69,7 @@ end component;
 -- Poned en aqu� el nombre de vuestros estados. Os recomendamos usar nombre que aporten informaci�n.
 type state_type is (Inicio, fallo_lectura_1, fallo_lectura_2_palabra_no_servida, fallo_lectura_2_ready,
 fallo_lectura_3_palabra_no_servida, fallo_lectura_3_ready, fallo_lectura_4_palabra_no_servida,
-fallo_lectura_4_ready, fallo_escritura_1, fallo_escritura_2); -- Esto es s�lo un ejemplo. Pensad que estados necesit�is y usad nombres descriptivosç
+fallo_lectura_4_ready, fallo_escritura_1, fallo_escritura_2,fallo_escritura_1_2); -- Esto es s�lo un ejemplo. Pensad que estados necesit�is y usad nombres descriptivosç
 
 -- fallo_lectura_1
 --fallo_lectura_2_palabra_no_servida
@@ -312,9 +312,10 @@ palabra <= palabra_UC;
          else
            MC_WE <='1';
           -- bus_RE <= '1';
-           -- MC_send_addr <= '1';
+           MC_send_addr <= '1';
            MC_tags_WE <='1';
            mux_origen <='1';
+           burst <='1';
            mux_MC_DOUT <= '1';
            count_enable <= '1'; -- revisar
            next_state <= Inicio;
@@ -330,7 +331,9 @@ palabra <= palabra_UC;
          else
            ready <='0';
            MC_WE <='1';
-         --  bus_RE <='1';
+           --bus_RE <='1';
+           MC_send_addr <= '1';
+           burst <='1';
            MC_tags_WE <='1';
            mux_origen <='1';
            count_enable <= '1'; -- revisar
@@ -340,23 +343,33 @@ palabra <= palabra_UC;
 		 ---------------------------------------
          ---------------------------------------
          when fallo_escritura_1 => -- q8 -
-         if (bus_wait='1') then
+         if(bus_wait='0' and hit_actual = '1') then
+          MC_WE <= '1';
+          ready <= '0';
+          bus_WE <= '1';
+          MC_send_addr <= '1';
+          MC_send_data <= '1';
+          next_state <= Inicio;
+
+         elsif(bus_wait='0' and hit_actual = '0') then
+           bus_WE <= '1';
+           MC_send_addr <= '1';
+           MC_send_data <= '1';
+           next_state <= fallo_escritura_1_2;
+
+         else
            bus_WE <= '1';
            MC_send_addr <= '1';
            MC_send_data <= '1';
            ready <= '0';
-         elsif (hit_actual = '1') then
-           MC_WE <= '1';
-           ready <= '0';
-           next_state <= Inicio;
-         else
-           bus_RE <= '1';
-           ready <= '0';
-           burst <= '1';
-           MC_send_addr <= '1';
-           next_state <= fallo_escritura_2;
          end if;
 
+         when fallo_escritura_1_2 => -- intermedio evitar buble infinito
+          bus_RE <= '1';
+          ready <= '0';
+          burst <= '1';
+          MC_send_addr <= '1';
+          next_state <= fallo_escritura_2;
          ---------------------------------------
          ---------------------------------------
          when fallo_escritura_2 => -- q9 -

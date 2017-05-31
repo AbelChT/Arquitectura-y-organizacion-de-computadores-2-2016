@@ -65,7 +65,7 @@
 
    stim_proc: process
     begin
-    palabra_solicitada <= "11";
+    palabra_solicitada <= "01";
     reset <= '1';
     RE <= '0';
     we <= '0';
