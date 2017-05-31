@@ -68,13 +68,13 @@ end component;
 -- Poned en aqu� el nombre de vuestros estados. Os recomendamos usar nombre que aporten informaci�n.
 type state_type is (Inicio, fallo_lectura_1, fallo_lectura_2_palabra_no_servida, fallo_lectura_2_ready,
 fallo_lectura_3_palabra_no_servida, fallo_lectura_3_ready, fallo_lectura_4_palabra_no_servida,
-fallo_lectura_4_ready, fallo_escritura_1, fallo_escritura_2,fallo_escritura_1_2);
+fallo_lectura_4_ready, escritura, lectura_antes_escritura, wait_before_write);
 
 signal state, next_state : state_type;
 --signal last_word: STD_LOGIC; --se activa cuando se est� pidiendo la �ltima palabra de un bloque
 signal count_enable: STD_LOGIC; -- se activa si se ha recibido una palabra de un bloque para que se incremente el contador de palabras
 signal palabra_UC : STD_LOGIC_VECTOR (1 downto 0);
-signal hit_actual: STD_LOGIC;
+signal type_op_actual: STD_LOGIC; -- 0 lectura 1 escritura
 begin
 
 -------------------------------------------------------------------------------------
@@ -158,9 +158,11 @@ palabra <= palabra_UC;
             burst <= '1';
             mux_ADDR <= '1';
             save_ADDR <= '1';
+            type_op_actual <= '0';
             next_state <= fallo_lectura_1;
 
-          elsif(RE = '0' AND WE = '1') then
+          elsif(RE = '0' AND WE = '1' AND hit='1') then
+            MC_WE <= '1';
             bus_WE <= '1';
             MC_send_addr <= '1';
             MC_send_data <= '1';
@@ -168,8 +170,18 @@ palabra <= palabra_UC;
             save_ADDR <= '1';
             mux_DIN <= '1';
             save_DIN <= '1';
-            hit_actual <= hit;
-            next_state <= fallo_escritura_1;
+            next_state <= escritura;
+
+          elsif(RE = '0' AND WE = '1') then
+            bus_RE <= '1';
+            MC_send_addr <= '1';
+            burst <= '1';
+            mux_ADDR <= '1';
+            save_ADDR <= '1';
+            mux_DIN <= '1';
+            save_DIN <= '1';
+            type_op_actual <= '1';
+            next_state <= lectura_antes_escritura;
 
           end if;
 
@@ -321,51 +333,54 @@ palabra <= palabra_UC;
            MC_send_addr <= '1';
            burst <='1';
            ready <='0';
-
          else
-           ready <='0';
-           MC_WE <='1';
-           bus_RE <='1';
-           MC_send_addr <= '1';
-           burst <='1';
-           MC_tags_WE <='1';
-           mux_origen <='1';
-           count_enable <= '1';
-           next_state <= Inicio;
+           if (type_op_actual='0') then
+             ready <='0';
+             MC_WE <='1';
+             bus_RE <='1';
+             MC_send_addr <= '1';
+             burst <='1';
+             MC_tags_WE <='1';
+             mux_origen <='1';
+             count_enable <= '1';
+             next_state <= Inicio;
+           else
+             ready <='0';
+             MC_WE <='1';
+             bus_RE <='1';
+             MC_send_addr <= '1';
+             burst <='1';
+             MC_tags_WE <='1';
+             mux_origen <='1';
+             count_enable <= '1';
+             next_state <= wait_before_write;
+           end if;
          end if;
 
+          when wait_before_write =>
+            ready <='0';
+            MC_WE <= '1';
+            bus_WE <= '1';
+            MC_send_addr <= '1';
+            MC_send_data <= '1';
+            next_state <= escritura;
 		 ---------------------------------------
          ---------------------------------------
-         when fallo_escritura_1 =>
-         if(bus_wait='0' and hit_actual = '1') then
-          MC_WE <= '1';
-          ready <= '0';
-          bus_WE <= '1';
-          MC_send_addr <= '1';
-          MC_send_data <= '1';
-          next_state <= Inicio;
-
-         elsif(bus_wait='0' and hit_actual = '0') then
+         when escritura =>
+         if(bus_wait='1') then
            bus_WE <= '1';
            MC_send_addr <= '1';
            MC_send_data <= '1';
-           next_state <= fallo_escritura_1_2;
-
+           ready <= '0';
          else
            bus_WE <= '1';
            MC_send_addr <= '1';
            MC_send_data <= '1';
            ready <= '0';
+           next_state <= Inicio;
          end if;
 
-         when fallo_escritura_1_2 => -- intermedio evitar buble infinito
-          bus_RE <= '1';
-          ready <= '0';
-          burst <= '1';
-          MC_send_addr <= '1';
-          next_state <= fallo_escritura_2;
-
-         when fallo_escritura_2 =>
+         when lectura_antes_escritura =>
          if (bus_wait='0') then
            MC_WE <= '1';
            bus_RE <= '1';
@@ -384,7 +399,7 @@ palabra <= palabra_UC;
          end if;
 
        end case;
-       
+
    end process;
 
 end Behavioral;
