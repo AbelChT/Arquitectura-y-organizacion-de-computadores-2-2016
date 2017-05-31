@@ -58,7 +58,6 @@ end UC_MC;
 
 architecture Behavioral of UC_MC is
 
-
 component counter_2bits is
             Port ( clk : in  STD_LOGIC;
                    reset : in  STD_LOGIC;
@@ -69,15 +68,7 @@ end component;
 -- Poned en aqu� el nombre de vuestros estados. Os recomendamos usar nombre que aporten informaci�n.
 type state_type is (Inicio, fallo_lectura_1, fallo_lectura_2_palabra_no_servida, fallo_lectura_2_ready,
 fallo_lectura_3_palabra_no_servida, fallo_lectura_3_ready, fallo_lectura_4_palabra_no_servida,
-fallo_lectura_4_ready, fallo_escritura_1, fallo_escritura_2,fallo_escritura_1_2); -- Esto es s�lo un ejemplo. Pensad que estados necesit�is y usad nombres descriptivosç
-
--- fallo_lectura_1
---fallo_lectura_2_palabra_no_servida
---fallo_lectura_2_ready
---fallo_lectura_3_palabra_no_servida
---fallo_lectura_3_ready
---fallo_lectura_4_palabra_no_servida
---fallo_lectura_4_ready
+fallo_lectura_4_ready, fallo_escritura_1, fallo_escritura_2,fallo_escritura_1_2);
 
 signal state, next_state : state_type;
 --signal last_word: STD_LOGIC; --se activa cuando se est� pidiendo la �ltima palabra de un bloque
@@ -138,24 +129,21 @@ palabra <= palabra_UC;
 		mux_DIN <= '0';
 		save_DIN <= '0';
 
-       --falta palabra
-
-       -- Inicio (q0)
-       -- fallo_lectura_1 (q1)
-       --fallo_lectura_2_palabra_no_servida  (q2)
-       --fallo_lectura_2_ready (q5)
-       --fallo_lectura_3_palabra_no_servida (q3)
-       --fallo_lectura_3_ready (q6)
-       --fallo_lectura_4_palabra_no_servida (q4)
-       --fallo_lectura_4_ready (q7)
-	     --fallo_escritura_1 (q8)
-	   --fallo_escritura_2 (q9)
+     -- Estado VHDL (Estado en el autómata)
+     -- Inicio (q0)
+     -- fallo_lectura_1 (q1)
+     -- fallo_lectura_2_palabra_no_servida  (q2)
+     -- fallo_lectura_2_ready (q5)
+     -- fallo_lectura_3_palabra_no_servida (q3)
+     -- fallo_lectura_3_ready (q6)
+     -- fallo_lectura_4_palabra_no_servida (q4)
+     -- fallo_lectura_4_ready (q7)
+	   -- fallo_escritura_1 (q8)
+     -- fallo_escritura_1_2 (q10)
+	   -- fallo_escritura_2 (q9)
 
        case state is
          when Inicio =>
-          --if (RE='1' AND WE='0' AND hit='1') then
-           -- No se hace nada ya que es la lista que hay arriba
-           -- next_state ya sera igual a Inicio
           if (RE='0' AND WE='0') then
             ready <= '0';
 
@@ -174,7 +162,6 @@ palabra <= palabra_UC;
 
           elsif(RE = '0' AND WE = '1') then
             bus_WE <= '1';
-            --ready <= '0';
             MC_send_addr <= '1';
             MC_send_data <= '1';
             mux_ADDR <= '1';
@@ -183,51 +170,54 @@ palabra <= palabra_UC;
             save_DIN <= '1';
             hit_actual <= hit;
             next_state <= fallo_escritura_1;
+
           end if;
-          ---------------------------------------
-          ---------------------------------------
-         when fallo_lectura_1 => -- q1 -ya
-         if (bus_wait='1') then
-           bus_RE <='1';
-           MC_send_addr <= '1';
-           burst <='1';
-           ready <= '0';
-         elsif (palabra_solicitada= "00") then
-           MC_WE <='1';
-           bus_RE <='1';
-           MC_send_addr <= '1';
-           mux_origen <='1';
-           burst <='1';
-           mux_MC_DOUT <='1';
-           count_enable <= '1'; -- revisar
-           next_state <= fallo_lectura_2_ready;
-         else
-           MC_WE <='1';
-           bus_RE <='1';
-           MC_send_addr <= '1';
-           mux_origen <='1';
-           burst <='1';
-           ready <= '0';
-           count_enable <= '1'; -- revisar
-           next_state <= fallo_lectura_2_palabra_no_servida;
-         end if;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_lectura_2_palabra_no_servida =>  -- q2 -ya
+
+         when fallo_lectura_1 =>
+          if (bus_wait='1') then
+            bus_RE <='1';
+            MC_send_addr <= '1';
+            burst <='1';
+            ready <= '0';
+
+          elsif (palabra_solicitada= "00") then
+            MC_WE <='1';
+            bus_RE <='1';
+            MC_send_addr <= '1';
+            mux_origen <='1';
+            burst <='1';
+            mux_MC_DOUT <='1';
+            count_enable <= '1';
+            next_state <= fallo_lectura_2_ready;
+
+          else
+            MC_WE <='1';
+            bus_RE <='1';
+            MC_send_addr <= '1';
+            mux_origen <='1';
+            burst <='1';
+            ready <= '0';
+            count_enable <= '1';
+            next_state <= fallo_lectura_2_palabra_no_servida;
+          end if;
+
+         when fallo_lectura_2_palabra_no_servida =>
           if (bus_wait='1') then
             bus_RE <='1';
             MC_send_addr <= '1';
             burst <='1';
             ready <='0';
+
           elsif (palabra_solicitada= "01") then
             MC_WE <='1';
             bus_RE <='1';
-             MC_send_addr <= '1';
+            MC_send_addr <= '1';
             mux_origen <='1';
             burst <='1';
             mux_MC_DOUT <='1';
-            count_enable <= '1'; -- revisar
+            count_enable <= '1';
             next_state <= fallo_lectura_3_ready;
+
           else
             MC_WE <='1';
             bus_RE <='1';
@@ -235,62 +225,64 @@ palabra <= palabra_UC;
             mux_origen <='1';
             burst <='1';
             ready <= '0';
-            count_enable <= '1'; -- revisar
+            count_enable <= '1';
             next_state <= fallo_lectura_3_palabra_no_servida;
           end if;
-          ---------------------------------------
-          ---------------------------------------
-         when fallo_lectura_2_ready => -- q5 -ya
-         if (bus_wait='1') then
+
+         when fallo_lectura_2_ready =>
+          if (bus_wait='1') then
            bus_RE <='1';
             MC_send_addr <= '1';
            burst <='1';
            ready <='0';
-         else
+
+          else
            MC_WE <='1';
            bus_RE <='1';
            MC_send_addr <= '1';
            mux_origen <='1';
            burst <='1';
            ready <= '0';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= fallo_lectura_3_ready;
-         end if;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_lectura_3_palabra_no_servida => -- q3 -ya
-         if (bus_wait='1') then
+          end if;
+
+
+         when fallo_lectura_3_palabra_no_servida =>
+          if (bus_wait='1') then
            bus_RE <='1';
            MC_send_addr <= '1';
            burst <='1';
            ready <='0';
-         elsif (palabra_solicitada= "10") then
+          elsif (palabra_solicitada= "10") then
            MC_WE <='1';
            bus_RE <='1';
            MC_send_addr <= '1';
            mux_origen <='1';
            burst <='1';
            mux_MC_DOUT <='1';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= fallo_lectura_4_ready;
-         else
+
+          else
            MC_WE <='1';
            bus_RE <='1';
             MC_send_addr <= '1';
            mux_origen <='1';
            burst <='1';
            ready <= '0';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= fallo_lectura_4_palabra_no_servida;
-         end if;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_lectura_3_ready => -- q6 -ya
+          end if;
+
+
+         when fallo_lectura_3_ready =>
          if (bus_wait='1') then
            bus_RE <='1';
             MC_send_addr <= '1';
            burst <='1';
            ready <='0';
+
          else
            MC_WE <='1';
            bus_RE <='1';
@@ -298,51 +290,53 @@ palabra <= palabra_UC;
            mux_origen <='1';
            burst <='1';
            ready <= '0';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= fallo_lectura_4_ready;
          end if;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_lectura_4_palabra_no_servida => -- q4 -ya
+
+
+         when fallo_lectura_4_palabra_no_servida =>
          if (bus_wait='1') then
            bus_RE <='1';
             MC_send_addr <= '1';
            burst <='1';
            ready <='0';
+
          else
            MC_WE <='1';
-          -- bus_RE <= '1';
+           bus_RE <= '1';
            MC_send_addr <= '1';
            MC_tags_WE <='1';
            mux_origen <='1';
            burst <='1';
            mux_MC_DOUT <= '1';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= Inicio;
          end if;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_lectura_4_ready => -- q7 -ya
+
+
+         when fallo_lectura_4_ready =>
          if (bus_wait='1') then
            bus_RE <='1';
            MC_send_addr <= '1';
            burst <='1';
            ready <='0';
+
          else
            ready <='0';
            MC_WE <='1';
-           --bus_RE <='1';
+           bus_RE <='1';
            MC_send_addr <= '1';
            burst <='1';
            MC_tags_WE <='1';
            mux_origen <='1';
-           count_enable <= '1'; -- revisar
+           count_enable <= '1';
            next_state <= Inicio;
          end if;
 
 		 ---------------------------------------
          ---------------------------------------
-         when fallo_escritura_1 => -- q8 -
+         when fallo_escritura_1 =>
          if(bus_wait='0' and hit_actual = '1') then
           MC_WE <= '1';
           ready <= '0';
@@ -370,9 +364,8 @@ palabra <= palabra_UC;
           burst <= '1';
           MC_send_addr <= '1';
           next_state <= fallo_escritura_2;
-         ---------------------------------------
-         ---------------------------------------
-         when fallo_escritura_2 => -- q9 -
+
+         when fallo_escritura_2 =>
          if (bus_wait='0') then
            MC_WE <= '1';
            bus_RE <= '1';
@@ -380,22 +373,18 @@ palabra <= palabra_UC;
            ready <= '0';
            mux_origen <= '1';
            burst <= '1';
+           count_enable <= '1';
            next_state <= fallo_lectura_2_ready;
+
          else
            bus_RE <= '1';
            MC_send_addr <= '1';
            ready <= '0';
            burst <= '1';
          end if;
-         --when others =>
-         -- Aqui nunca deberia de llegar
-       end case;
 
-   -- Estado Inicio
-      -- if (state = Inicio and RE= '0' and WE= '0') then -- si no piden nada no hacemos nada
-      --      next_state <= Inicio;
-     --  end if;
-    -- Incluir aqu� vuestra m�quina de estados. Hay un ejemplo en las transparencas de VHDL
+       end case;
+       
    end process;
 
 end Behavioral;
