@@ -66,7 +66,6 @@ component UC_MC is
             MC_send_addr : out  STD_LOGIC; --ordena que se env�en la direcci�n y las se�ales de control al bus
             MC_send_data : out  STD_LOGIC; --ordena que se env�en los datos
             burst : out  STD_LOGIC; --indica que la operaci�n no ha terminado
-
             mux_MC_DOUT : out  STD_LOGIC;
             mux_ADDR : out  STD_LOGIC;
             save_ADDR : out  STD_LOGIC;
@@ -110,27 +109,10 @@ signal save_DIN : std_logic;
 signal Dout_parcial: std_logic_vector (31 downto 0); -- representa la salida de MC_data
 begin
 
-  --- nuevo
-  -- Mux inicial que mantiene duranate la escritura la addr guardada
-  registro_save_ADDR: process (CLK)
-     begin
-         if (CLK'event and CLK = '1') then
-           if ( save_ADDR = '1') then
-             ADDR_guardado <= ADDR;
-           end if;
-         end if;
-     end process;
-       ADDR_correcto <= ADDR_guardado when (mux_ADDR='0') else ADDR;
-
-    registro_save_DIN: process (CLK)
-       begin
-           if (CLK'event and CLK = '1') then
-             if ( save_DIN = '1') then
-               DIN_guardado <= Din;
-             end if;
-           end if;
-       end process;
-
+  -- Registros iniciales
+  ADDR_guardado  <= ADDR when (save_ADDR = '1');
+  ADDR_correcto <= ADDR_guardado when (mux_ADDR='0') else ADDR;
+  DIN_guardado <= Din when (save_DIN = '1');
   DIN_correcto <= DIN_guardado when (mux_DIN='0') else Din;
 
   ----------
