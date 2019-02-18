@@ -1,5 +1,5 @@
 ## TP1 AOC2
-Trabajo práctico Nº1 de la asignatura Arquitectura y organización de computadores 2 del año 2016.
+Trabajo práctico Nº1 de la asignatura Arquitectura y organización de computadores 2 del curso 2016-2017.
 
 En el se diseña un procesador MIPS, el cual se encuentra en la carpeta Modulos VHDL.
 
