@@ -1,0 +1,8 @@
+Autores: Abel Chils Trabanco (NIA:718997) y  Ángel Cañal Muniesa (NIA: 716205)
+
+Resultados del test: Funcionaba correctamente en la entrega inicial.
+
+Autoevaluación: Creo que la nota que se merece este trabajo rondaría el 8, ya que se tiene una máquina de estados Mealy con sólo
+3 estados y se ha entregado correctamente en la entrega inicial, aunque no se disponga de la sección avanzada.
+
+Agradecimientos: La evaluación la hemos realizado sólo los integrantes del grupo.
