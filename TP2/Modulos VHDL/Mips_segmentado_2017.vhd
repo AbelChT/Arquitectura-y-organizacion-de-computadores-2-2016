@@ -293,6 +293,16 @@ COMPONENT Banco_MEM
         );
     END COMPONENT;
 
+-- Contador
+    COMPONENT counter is
+        Port ( clk : in  STD_LOGIC;
+               reset : in  STD_LOGIC;
+               count_enable : in  STD_LOGIC;
+               load : in  STD_LOGIC;
+               D_in  : in  STD_LOGIC_VECTOR (7 downto 0);
+    		   count : out  STD_LOGIC_VECTOR (7 downto 0));
+    end COMPONENT;
+
 signal load_PC, PCSrc, RegWrite_ID, RegWrite_EX, RegWrite_MEM, RegWrite_WB, Z, Branch, RegDst_ID, RegDst_EX, ALUSrc_ID, ALUSrc_EX: std_logic;
 signal MemtoReg_ID, MemtoReg_EX, MemtoReg_MEM, MemtoReg_WB, MemWrite_ID, MemWrite_EX, MemWrite_MEM, MemRead_ID, MemRead_EX, MemRead_MEM: std_logic;
 signal PC_in, PC_out, four, PC4, Dirsalto_ID, IR_in, IR_ID, PC4_ID, inm_ext_EX, Mux_out, MuxMD_out_MEM, MuxMD_out_WB : std_logic_vector(31 downto 0);
@@ -308,6 +318,8 @@ signal IR_in_load : std_logic_vector(31 downto 0); -- siguiente instruccion carg
 signal Mem_ready: std_logic;
 signal signal_STOP_Mem : STD_LOGIC; -- Stop producido al esperar a MD
 signal load_Banco_ID_EX, load_Banco_EX_MEM, load_Banco_MEM_WB : STD_LOGIC; -- Indica al procesador que pare un ciclo
+signal paradas_control, paradas_datos, paradas_memoria : STD_LOGIC_VECTOR (7 downto 0);
+signal count_paradas_control_enable, count_paradas_datos_enable: STD_LOGIC;
 
 begin
 pc: reg32 port map (	Din => PC_in, clk => clk, reset => reset, load => load_PC, Dout => PC_out);
@@ -455,7 +467,18 @@ Banco_MEM_WB: Banco_WB PORT MAP ( ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_
 ------------------------------------------Etapa WB-------------------------------------------------------------------
 --
 mux_busW: mux2_1 port map (Din0 => MuxMD_out_WB, DIn1 => MDR, ctrl => MemtoReg_WB, Dout => busW);
+
+--
+------------------------------------------Contadores-------------------------------------------------------------------
+--
+count_paradas_control_enable <= '1' when (PCSrc='1' AND signal_STOP_Mem='0') else '0';
+contador_paradas_control: counter port map (clk => clk, reset => reset, count_enable => count_paradas_control_enable, load => '0', D_in => "00000000", count => paradas_control );
+count_paradas_datos_enable <= '1' when (signal_STOP='1' AND signal_STOP_Mem='0') else '0';
+contador_paradas_datos: counter port map (clk => clk, reset => reset, count_enable => count_paradas_datos_enable, load => '0', D_in => "00000000", count => paradas_datos);
+contador_paradas_memoria: counter port map (clk => clk, reset => reset, count_enable => signal_STOP_Mem, load => '0', D_in => "00000000", count => paradas_memoria );
+
 -----------
 -- output no se usa para nada. Est� puesto para que el sistema tenga alguna salida al exterior.
+
 output <= IR_ID;
 end Behavioral;
